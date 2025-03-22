@@ -118,10 +118,15 @@ export default function LandingPage() {
             variant="h2"
             sx={{ fontWeight: "bold", marginBottom: "20px" }}
           >
-            Welcome to the Itinerary Planner
+            Welcome to the BookIt
           </Typography>
-          <Typography variant="h6" sx={{ marginBottom: "20px" }}>
-            Discover and organize your perfect journey around the world!
+          <Typography
+            variant="h6"
+            style={{ wordWrap: "break-word" }}
+            sx={{ marginBottom: "20px" }}
+          >
+            Don&apos;t hesitate no more and just BookIt!!!
+            <br /> Your perfect itinerary is just a few clicks away.
           </Typography>
           <Button
             variant="contained"

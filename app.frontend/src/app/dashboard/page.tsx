@@ -9,11 +9,15 @@ import {
 } from "react-simple-maps";
 import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
+import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
 
 const geoJsonUrl = "/ne_110m_admin_0_countries.geojson";
 
 export default function WelcomePage() {
+  const router = useRouter();
   const [worldData, setWorldData] = useState<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     string | Record<string, any> | string[] | undefined
   >(undefined);
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
@@ -23,22 +27,8 @@ export default function WelcomePage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [zoomLevel] = useState(1.5);
   const [center] = useState<[number, number]>([0, 20]);
+  const { data: user, isLoading, isError } = useCurrentUser();
 
-  const visitedCountries = [
-    "United States of America",
-    "Spain",
-    "Hungary",
-    "Greece",
-    "Germany",
-    "Croatia",
-    "Bulgaria",
-    "Italy",
-    "North Macedonia",
-    "Turkey",
-    "Egypt",
-  ];
-
-  // Fetch GeoJSON Data
   useEffect(() => {
     const fetchData = async () => {
       const response = await fetch(geoJsonUrl);
@@ -50,10 +40,16 @@ export default function WelcomePage() {
   }, []);
 
   if (!worldData) return <Typography>Loading map...</Typography>;
-
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
+  if (isLoading) return <Typography>Loading...</Typography>;
+  if (isError || !user) return <Typography>Error loading profile</Typography>;
+  const visitedCountries = user.visitedCountries || [];
   return (
     <Box sx={{ width: "100%", minHeight: "100vh", position: "relative" }}>
-      <Navbar />
+      <Navbar username={user.username} onLogout={handleLogout} />
 
       <Box sx={{ display: "flex", height: "100vh" }}>
         <Box
@@ -186,7 +182,6 @@ export default function WelcomePage() {
             </ZoomableGroup>
           </ComposableMap>
 
-          {/* Hovered Country Info */}
           {hoveredCountry && (
             <Box
               sx={{

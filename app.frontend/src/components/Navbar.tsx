@@ -1,23 +1,36 @@
-import React from "react";
-import Link from "next/link";
+import React, { useState } from "react";
 import {
   AppBar,
   Toolbar,
   Typography,
   Box,
-  Button,
   Avatar,
+  Menu,
+  MenuItem,
+  IconButton,
 } from "@mui/material";
 
-const Navbar: React.FC = () => {
-  const username = "bobix";
+type NavbarProps = {
+  username: string;
+  onLogout?: () => void;
+};
+const Navbar: React.FC<NavbarProps> = ({ username, onLogout }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
   return (
     <AppBar
       position="static"
       sx={{
-        backgroundColor: "#1e1e1e", // Dark gray background
-        boxShadow: "0 4px 24px rgba(0, 0, 0, 0.2)", // Shadow effect
+        backgroundColor: "#1e1e1e",
+        boxShadow: "0 4px 24px rgba(0, 0, 0, 0.2)",
         padding: "8px 0",
         transition: "all 0.3s ease-in-out",
       }}
@@ -33,7 +46,6 @@ const Navbar: React.FC = () => {
           padding: "0 20px",
         }}
       >
-        {/* Logo / Title */}
         <Typography
           variant="h5"
           sx={{
@@ -48,65 +60,85 @@ const Navbar: React.FC = () => {
               transition: "all 0.3s ease",
             },
           }}
+          onClick={() => (window.location.href = "/dashboard")}
         >
-          ✈️ Itinerary Planner
+          ✈️ BookIt
         </Typography>
 
-        {/* Navigation Links */}
         <Box sx={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <Link href="/" passHref>
-            <Button sx={navButtonStyle}>Home</Button>
-          </Link>
-          <Link href="/login" passHref>
-            <Button sx={navButtonStyle}>Login</Button>
-          </Link>
-          <Link href="/welcome" passHref>
-            <Button sx={navButtonStyle}>Welcome</Button>
-          </Link>
-
-          {/* Username & Avatar */}
           <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Avatar
-              sx={{ bgcolor: "#FFD700", color: "#333", fontWeight: "bold" }}
+            <IconButton onClick={handleMenuOpen}>
+              <Avatar
+                sx={{ bgcolor: "#FFD700", color: "#333", fontWeight: "bold" }}
+              >
+                {username[0].toUpperCase()}
+              </Avatar>
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              PaperProps={{
+                sx: {
+                  mt: 1.5,
+                  minWidth: 150,
+                  backgroundColor: "#2a2a2a",
+                  color: "#fff",
+                  borderRadius: "12px",
+                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
+                  padding: "4px 0",
+                },
+              }}
             >
-              {username[0].toUpperCase()}
-            </Avatar>
-            <Typography sx={{ color: "#fff", fontWeight: "bold" }}>
-              {username}
-            </Typography>
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  window.location.href = "/profile";
+                }}
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "#3c3c3c",
+                  },
+                }}
+              >
+                Profile
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  onLogout?.();
+                }}
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  transition: "all 0.2s ease",
+                  color: "#f87171",
+                  "&:hover": {
+                    backgroundColor: "#471111",
+                    color: "#fff",
+                  },
+                }}
+              >
+                Logout
+              </MenuItem>
+            </Menu>
           </Box>
         </Box>
       </Toolbar>
     </AppBar>
   );
-};
-
-// Style for navigation buttons
-const navButtonStyle = {
-  color: "#fff",
-  fontWeight: "bold",
-  position: "relative",
-  overflow: "hidden",
-  padding: "8px 16px",
-  transition: "color 0.3s ease",
-  "&:hover": {
-    color: "#FFD700",
-  },
-  "&::after": {
-    content: '""',
-    position: "absolute",
-    left: 0,
-    bottom: 0,
-    width: "100%",
-    height: "2px",
-    backgroundColor: "#FFD700",
-    transform: "scaleX(0)",
-    transformOrigin: "left",
-    transition: "transform 0.3s ease",
-  },
-  "&:hover::after": {
-    transform: "scaleX(1)",
-  },
 };
 
 export default Navbar;

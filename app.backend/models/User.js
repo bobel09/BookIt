@@ -24,7 +24,11 @@ const UserSchema = new mongoose.Schema({
   }],
   preferences: {
     type: Object,
-    default: {}
+    default: {},
+  },
+  visitedCountries: {
+    type: [String],
+    default: [],
   },
   createdAt: {
     type: Date,

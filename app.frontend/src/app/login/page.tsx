@@ -1,18 +1,40 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, TextField, Button } from "@mui/material";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import api from "../../lib/axios";
+import { AxiosError } from "axios";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/dashboard");
+    setError("");
+
+    try {
+      const res = await api.post("/users/login", { email, password });
+      console.log(res.data);
+      const { token, user } = res.data;
+      localStorage.setItem("token", token);
+      console.log("Logged in successfully", { user, token });
+      router.push("/dashboard");
+    } catch (error) {
+      const err = error as AxiosError<{ message: string }>;
+      setError(err.response?.data?.message || "Login failed");
+    }
   };
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/dashboard");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen flex bg-[#1b1b1b] text-white">
@@ -29,11 +51,15 @@ export default function LoginPage() {
         </Typography>
         <Typography className="text-gray-400 mb-6">
           Don&apos;t have an account?{" "}
-          <a href="#" className="text-yellow-400 hover:underline">
+          <a href="/register" className="text-yellow-400 hover:underline">
             Create an account
           </a>
         </Typography>
-        <form onSubmit={handleSubmit} className="w-full">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full"
+          autoComplete="one-time-code"
+        >
           <TextField
             label="Email Address"
             type="email"
@@ -81,6 +107,15 @@ export default function LoginPage() {
           >
             Log In
           </Button>
+          {error && (
+            <Typography
+              variant="body2"
+              className="text-red-500 mt-4 text-center"
+              sx={{ fontWeight: "bold" }}
+            >
+              {error}
+            </Typography>
+          )}
         </form>
         <Typography className="text-center text-gray-400 mt-6 text-sm">
           © 2025 Itinerary Planner. All rights reserved.

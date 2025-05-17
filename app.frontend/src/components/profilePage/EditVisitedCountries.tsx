@@ -10,20 +10,11 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useUpdateVisitedCountries } from "../../hooks/mutations/updateUserVisitedCountriesMutation";
+import allCountryData from "../../data/all.json";
 
-const ALL_COUNTRIES = [
-  "France",
-  "Germany",
-  "Italy",
-  "Japan",
-  "Canada",
-  "USA",
-  "Romania",
-  "Spain",
-  "Greece",
-  "Brazil",
-  "Australia",
-];
+export const ALL_COUNTRIES_NAMES = allCountryData.map(
+  (country: { name: string }) => country.name
+);
 
 export default function VisitedCountriesManager({
   userId,
@@ -41,17 +32,26 @@ export default function VisitedCountriesManager({
     setSelected([]);
   };
 
+  const handleRemove = (country: string) => {
+    const updated = visitedCountries.filter((c) => c !== country);
+    updateCountries(updated);
+  };
+
   return (
     <Paper
       sx={{
         width: { xs: "100%", md: 350 },
         p: 4,
-        backgroundColor: "gray",
+        backgroundColor: "white",
         borderRadius: 2,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
       }}
     >
       <Box>
-        <Typography variant="h5" sx={{ mb: 2 }}>
+        <Typography variant="h5" fontWeight={600} color="#000" sx={{ mb: 2 }}>
           Visited Countries
         </Typography>
 
@@ -61,7 +61,16 @@ export default function VisitedCountriesManager({
               <Chip
                 key={idx}
                 label={country}
-                sx={{ backgroundColor: "#03a9f4", color: "#fff" }}
+                onDelete={() => handleRemove(country)}
+                sx={{
+                  backgroundColor: "#e0f7fa",
+                  color: "#00796b",
+                  fontWeight: 500,
+                  "& .MuiChip-deleteIcon": {
+                    color: "#00796b",
+                    "&:hover": { color: "#004d40" },
+                  },
+                }}
               />
             ))}
           </Box>
@@ -73,7 +82,7 @@ export default function VisitedCountriesManager({
 
         <Autocomplete
           multiple
-          options={ALL_COUNTRIES}
+          options={ALL_COUNTRIES_NAMES}
           value={selected}
           onChange={(event, newValue) => setSelected(newValue)}
           renderOption={(props, option) => {
@@ -89,7 +98,11 @@ export default function VisitedCountriesManager({
             );
           }}
           renderInput={(params) => (
-            <TextField {...params} label="Search countries to add" />
+            <TextField
+              {...params}
+              label="Search countries to add"
+              placeholder="Start typing..."
+            />
           )}
           sx={{ mb: 2 }}
         />

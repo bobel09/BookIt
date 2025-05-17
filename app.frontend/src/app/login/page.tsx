@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Box, Typography, TextField, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  FormControlLabel,
+  Checkbox,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import api from "../../lib/axios";
@@ -11,17 +18,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const router = useRouter();
   const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      const res = await api.post("/users/login", { email, password });
-      console.log(res.data);
-      const { token, user } = res.data;
+      const res = await api.post("/users/login", {
+        email,
+        password,
+        rememberMe,
+      });
+      const { token } = res.data;
       localStorage.setItem("token", token);
-      console.log("Logged in successfully", { user, token });
       router.push("/dashboard");
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
@@ -85,10 +95,21 @@ export default function LoginPage() {
           />
 
           <div className="flex items-center justify-between mb-6">
-            <label className="flex items-center text-sm text-gray-400">
-              <input type="checkbox" className="mr-2" />
-              Stay signed in for 2 weeks
-            </label>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  sx={{
+                    color: "#ffcc00",
+                    "&.Mui-checked": { color: "#ffcc00" },
+                  }}
+                />
+              }
+              label={
+                <Typography sx={{ color: "#fff" }}>Remember me?</Typography>
+              }
+            />
             <a href="#" className="text-sm text-yellow-400 hover:underline">
               Forgot your password?
             </a>

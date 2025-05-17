@@ -51,9 +51,8 @@ export default function ProfilePage() {
             flexDirection: { xs: "column", md: "row" },
           }}
         >
-          {/* Preferences Section */}
           <Paper
-            sx={{ flex: 1, p: 4, backgroundColor: "gray", borderRadius: 2 }}
+            sx={{ flex: 1, p: 4, backgroundColor: "white", borderRadius: 2 }}
           >
             <Typography variant="h6">
               Username: <strong>{user.username}</strong>

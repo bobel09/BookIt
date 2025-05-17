@@ -42,7 +42,7 @@ const getAllUsers = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe} = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -54,22 +54,38 @@ const loginUser = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "2h" }
-    );
-
-    res.json({
-      token,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        preferences: user.preferences
-      }
-    });
+    if (rememberMe) {
+      const token = jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET
+      );
+     res.json({
+        token,
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          preferences: user.preferences
+        }
+      });
+    }
+    else {
+      const token = jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "2h" }
+      );
+      res.json({
+        token,
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          preferences: user.preferences
+        }
+      });
+    }
+   
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: "Server error" });

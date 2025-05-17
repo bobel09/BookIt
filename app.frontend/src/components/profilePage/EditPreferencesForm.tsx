@@ -89,7 +89,7 @@ export default function EditPreferencesForm({
   };
 
   return (
-    <Paper sx={{ p: 4, backgroundColor: "gray", borderRadius: 2, mt: 4 }}>
+    <Paper sx={{ p: 4, backgroundColor: "white", borderRadius: 2, mt: 4 }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
         Update Preferences
       </Typography>
@@ -108,7 +108,7 @@ export default function EditPreferencesForm({
           onChange={(e) => setCurrency(e.target.value)}
           label="Currency"
           sx={{
-            color: "#fff",
+            color: "black",
             "& .MuiSelect-icon": { color: "#bbb" },
             "& .MuiOutlinedInput-notchedOutline": { borderColor: "#666" },
             "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#aaa" },
@@ -177,7 +177,7 @@ export default function EditPreferencesForm({
           onChange={(e) => setHotel(e.target.value)}
           label="Hotel Preference"
           sx={{
-            color: "#fff",
+            color: "black",
             "& .MuiSelect-icon": { color: "#bbb" },
             "& .MuiOutlinedInput-notchedOutline": { borderColor: "#666" },
             "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#aaa" },

@@ -42,6 +42,7 @@ export default function LandingPage() {
         minHeight: "120vh",
         position: "relative",
         overflow: "hidden",
+        backgroundColor: "black",
       }}
     >
       <Box

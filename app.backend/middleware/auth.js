@@ -7,10 +7,12 @@ const protect = (req, res, next) => {
     const token = authHeader.split(" ")[1];
 
     try {
+      console.log("Verifying token:", token);
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = decoded; 
       next(); 
     } catch (err) {
+      console.error("Token verification failed:", err);
       return res.status(401).json({ message: "Invalid token" });
     }
   } else {

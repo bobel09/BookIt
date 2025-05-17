@@ -1,6 +1,6 @@
 "use client";
 
-import { Autocomplete, Box, Paper, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, TextField, Typography } from "@mui/material";
 import {
   ComposableMap,
   Geographies,
@@ -42,7 +42,7 @@ export default function WelcomePage() {
     fetchData();
   }, []);
   const handleSearchChange = (
-    event: React.ChangeEvent<{}>,
+    event: React.ChangeEvent<object>,
     value: string | null
   ) => {
     setSearchValue(value);
@@ -171,7 +171,11 @@ export default function WelcomePage() {
                 <TextField
                   {...params}
                   label=""
-                  placeholder="Search for a country..."
+                  placeholder={
+                    selectedCountry
+                      ? `Selected: ${selectedCountry}`
+                      : "Search for a country..."
+                  }
                   InputProps={{
                     ...params.InputProps,
                     startAdornment: (
@@ -222,6 +226,36 @@ export default function WelcomePage() {
                 />
               )}
             />
+            {selectedCountry && (
+              <Box sx={{ mt: 3, display: "flex", justifyContent: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "12px 32px",
+                    backgroundColor: "yellow  ",
+                    color: "black",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    borderRadius: "50px",
+                    boxShadow: "0 4px 16px rgba(0, 123, 255, 0.3)",
+                    transition: "all 0.3s ease",
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "gray",
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 6px 24px rgba(0, 123, 255, 0.4)",
+                    },
+                  }}
+                  onClick={() => {
+                    router.push(`/popular-places?country=${selectedCountry}`);
+                  }}
+                >
+                  🚀 Make it Happen
+                </Box>
+              </Box>
+            )}
           </Box>
         </Box>
 
@@ -277,6 +311,7 @@ export default function WelcomePage() {
                           }}
                           onClick={() => {
                             setSelectedCountry(geo.properties.NAME);
+                            setSearchValue(geo.properties.NAME);
                           }}
                           style={{
                             default: {

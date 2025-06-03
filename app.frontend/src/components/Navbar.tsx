@@ -9,17 +9,23 @@ import {
   MenuItem,
   IconButton,
 } from "@mui/material";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type NavbarProps = {
   username: string;
-  onLogout?: () => void;
 };
-const Navbar: React.FC<NavbarProps> = ({ username, onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ username }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const router = useRouter();
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
+  };
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
   };
 
   const handleMenuClose = () => {
@@ -62,8 +68,109 @@ const Navbar: React.FC<NavbarProps> = ({ username, onLogout }) => {
           }}
           onClick={() => (window.location.href = "/dashboard")}
         >
-          ✈️ BookIt
+          <Image
+            src="/polaroid_navbar.svg"
+            alt="BookIt Logo"
+            width={40}
+            height={40}
+            style={{ marginRight: "8px", marginBottom: "2px" }}
+          />
+          BookIt
         </Typography>
+
+        {/* Minimalist Planes and Stays links in the middle */}
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 3,
+          }}
+        >
+          {/* Airplane icon (SVG) */}
+          <Typography
+            sx={{
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "1.13rem",
+              cursor: "pointer",
+              opacity: 0.92,
+              px: 2,
+              display: "flex",
+              alignItems: "center",
+              letterSpacing: 0.5,
+              fontFamily: "Montserrat, Roboto, Arial, sans-serif",
+              transition:
+                "color 0.3s, opacity 0.3s, text-shadow 0.3s, transform 0.3s",
+              textShadow: "0 1px 8px #1976d233",
+              "&:hover": {
+                color: "#FFD700",
+                opacity: 1,
+                textDecoration: "none",
+                transform: "translateY(-3px)",
+                textShadow: "0 2px 12px #FFD70055",
+              },
+            }}
+            onClick={() => {
+              router.push("/planes");
+            }}
+          >
+            <span
+              style={{ display: "flex", alignItems: "center", marginRight: 6 }}
+            >
+              {/* SVG airplane icon */}
+              <Image
+                src="/airplane_navbar.svg"
+                alt="Airplane Icon"
+                width={40}
+                height={40}
+                style={{ fill: "currentColor" }}
+              />
+            </span>
+            <span style={{ marginTop: 2, letterSpacing: 1 }}>Flights</span>
+          </Typography>
+          <Typography
+            sx={{
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "1.13rem",
+              cursor: "pointer",
+              opacity: 0.92,
+              px: 2,
+              display: "flex",
+              alignItems: "center",
+              letterSpacing: 0.5,
+              fontFamily: "Montserrat, Roboto, Arial, sans-serif",
+              transition:
+                "color 0.3s, opacity 0.3s, text-shadow 0.3s, transform 0.3s",
+              textShadow: "0 1px 8px #1976d233",
+              "&:hover": {
+                color: "#FFD700",
+                opacity: 1,
+                textDecoration: "none",
+                transform: "translateY(-3px)",
+                textShadow: "0 2px 12px #FFD70055",
+              },
+            }}
+            onClick={() => {
+              router.push("/stays");
+            }}
+          >
+            <span
+              style={{ display: "flex", alignItems: "center", marginRight: 6 }}
+            >
+              <Image
+                src="/stays_navbar.svg"
+                alt="Hotel Icon"
+                width={40}
+                height={40}
+                style={{ fill: "currentColor" }}
+              />
+            </span>
+            <span style={{ marginTop: 2, letterSpacing: 1 }}>Hotels</span>
+          </Typography>
+        </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -118,7 +225,7 @@ const Navbar: React.FC<NavbarProps> = ({ username, onLogout }) => {
               <MenuItem
                 onClick={() => {
                   handleMenuClose();
-                  onLogout?.();
+                  handleLogout();
                 }}
                 sx={{
                   px: 3,

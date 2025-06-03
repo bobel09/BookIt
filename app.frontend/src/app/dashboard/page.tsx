@@ -17,6 +17,7 @@ const geoJsonUrl = "/ne_110m_admin_0_countries.geojson";
 
 export default function WelcomePage() {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [worldData, setWorldData] = useState<any>(undefined);
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [hoveredCountryKey, setHoveredCountryKey] = useState<string | null>(
@@ -40,6 +41,7 @@ export default function WelcomePage() {
     }
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const handleSearchChange = (
     event: React.ChangeEvent<object>,
@@ -61,11 +63,6 @@ export default function WelcomePage() {
   };
   if (!worldData) return <Typography>Loading map...</Typography>;
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/login");
-  };
-
   if (isLoading) return <Typography>Loading...</Typography>;
   if (isError || !user) {
     localStorage.removeItem("token");
@@ -76,12 +73,14 @@ export default function WelcomePage() {
 
   return (
     <>
-      <Navbar username={user.username} onLogout={handleLogout} />
+      <Navbar username={user.username} />
       <Box
         sx={{
           width: "100%",
           height: "100vh",
           position: "relative",
+          background:
+            "linear-gradient(120deg, #232526 0%, #1e1e1e 60%, #101010 100%)",
         }}
       >
         <Box

@@ -1,3 +1,5 @@
 .env
 .gitignore
 app.backend/.env
+node_modules
+app.backend/data/cities.csv

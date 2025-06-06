@@ -24,14 +24,16 @@ exports.searchDestination = async (req, res) => {
 
 // Search hotels
 exports.searchHotels = async (req, res) => {
-  const { dest_id, checkin_date, checkout_date, adults, room_qty } = req.query;
+  const { dest_id, checkin_date, checkout_date, adults, room_qty, currency } = req.query;
   try {
     const params = new URLSearchParams({
+      search_type: "CITY",
       dest_id,
-      checkin_date,
-      checkout_date,
-      adults_number: adults,
+      arrival_date: checkin_date,
+      departure_date: checkout_date,
+      adults,
       room_qty,
+      currency: currency || "USD",
     });
     const url = `${BASE_URL}/api/v1/hotels/searchHotels?${params.toString()}`;
     const response = await fetch(url, {
@@ -41,6 +43,7 @@ exports.searchHotels = async (req, res) => {
       },
     });
     const data = await response.json();
+    console.log("Hotels search response:", data);
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: "Failed to search hotels", details: err.message });
@@ -49,9 +52,9 @@ exports.searchHotels = async (req, res) => {
 
 // Get hotel details
 exports.getHotelDetails = async (req, res) => {
-  const { hotel_id } = req.query;
+  const { hotel_id, arrival_date, departure_date, adults } = req.query;
   try {
-    const url = `${BASE_URL}/api/v1/hotels/getHotelDetails?hotel_id=${encodeURIComponent(hotel_id)}`;
+    const url = `${BASE_URL}/api/v1/hotels/getHotelDetails?hotel_id=${encodeURIComponent(hotel_id)}&arrival_date=${encodeURIComponent(arrival_date)}&departure_date=${encodeURIComponent(departure_date)}&adults=${encodeURIComponent(adults)}`;
     const response = await fetch(url, {
       headers: {
         "X-RapidAPI-Key": RAPID_API_KEY,

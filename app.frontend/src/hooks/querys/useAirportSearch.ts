@@ -7,12 +7,12 @@ export const useAirportSearch = (keyword: string) => {
       const res = await fetch(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL
-        }/flights/airports?keyword=${encodeURIComponent(keyword)}`
+        }/flights/search-location?keyword=${encodeURIComponent(keyword)}`
       );
       if (!res.ok) throw new Error("Failed to fetch airports");
       return res.json();
     },
-    enabled: !!keyword,
+    enabled: !!keyword && keyword.length >= 3,
     staleTime: 1000 * 60 * 5,
   });
 };

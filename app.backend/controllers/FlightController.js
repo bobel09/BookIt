@@ -1,90 +1,120 @@
-const { getAmadeusAccessToken } = require("../middleware/amadeusService");
 const fetch = require("node-fetch");
 
-const AMADEUS_HOST = "https://test.api.amadeus.com";
+const RAPIDAPI_HOST = "booking-com15.p.rapidapi.com";
+const RAPIDAPI_BASE = `https://${RAPIDAPI_HOST}`;
 
-exports.searchAirportsByCity = async (req, res) => {
+// 1. Search for airport/city suggestions
+exports.searchFlightLocation = async (req, res) => {
   const { keyword } = req.query;
 
-  if (!keyword || keyword.length < 3 || !/^[a-zA-Z0-9\s]+$/.test(keyword)) {
-    return res
-      .status(400)
-      .json({ error: "Keyword must be at least 3 alphanumeric characters" });
+  if (!keyword || keyword.length < 3) {
+    return res.status(400).json({ error: "Keyword must be at least 3 characters long." });
   }
 
   try {
-    const token = await getAmadeusAccessToken();
     const response = await fetch(
-      `${AMADEUS_HOST}/v1/reference-data/locations?subType=AIRPORT,CITY&keyword=${encodeURIComponent(
-        keyword
-      )}&page[limit]=10`,
+      `${RAPIDAPI_BASE}/api/v1/flights/searchDestination?query=${encodeURIComponent(keyword)}`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        method: "GET",
+        headers: {
+          "X-RapidAPI-Key": process.env.RAPID_API_KEY,
+          "X-RapidAPI-Host": RAPIDAPI_HOST,
+        },
       }
     );
 
     const data = await response.json();
-    console.log("Amadeus location API response:", data);
-    if (data.errors) {
-      console.error("Amadeus location API error:", data.errors);
-      return res.status(400).json(data.errors);
+    if (!data.status) {
+      return res.status(500).json({ error: data.message || "Location search failed." });
     }
 
     res.json(data.data || []);
-  } catch (err) {
-    console.error("Airport search failed:", err);
-    res.status(500).json({ error: "Failed to fetch airport data" });
+  } catch (error) {
+    console.error("searchFlightLocation error:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
-
+// 2. Search for flights
 exports.searchFlights = async (req, res) => {
   const {
-    originLocationCode,
-    destinationLocationCode,
-    departureDate,
+    from,
+    to,
+    depart,
     returnDate,
     adults,
-    travelClass,
-    nonStop,
-    currencyCode = "EUR",
+    cabinClass,
+    currency ,
   } = req.query;
 
-  if (!originLocationCode || !destinationLocationCode || !departureDate || !adults) {
-    return res.status(400).json({ error: "Missing required query parameters" });
+  if (!from || !to || !depart) {
+    return res.status(400).json({ error: "Missing required query parameters: from, to, depart." });
   }
 
   try {
-    const token = await getAmadeusAccessToken();
-
-    const query = new URLSearchParams({
-      originLocationCode: String(originLocationCode),
-      destinationLocationCode: String(destinationLocationCode),
-      departureDate: String(departureDate),
-      ...(returnDate && { returnDate: String(returnDate) }),
+    const queryParams = new URLSearchParams({
+      fromId: from,
+      toId: to,
+      departDate: depart,
+      type: returnDate ? "ROUNDTRIP" : "ONEWAY",
+      returnDate: returnDate || "",
       adults: String(adults),
-      ...(travelClass && { travelClass }),
-      ...(nonStop && { nonStop }),
-      currencyCode,
-      max: "10",
+      cabinClass,
+      currency_code: currency || "USD",
     });
 
     const response = await fetch(
-      `https://test.api.amadeus.com/v2/shopping/flight-offers?${query.toString()}`,
+      `${RAPIDAPI_BASE}/api/v1/flights/searchFlights?${queryParams.toString()}`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        method: "GET",
+        headers: {
+          "X-RapidAPI-Key": process.env.RAPID_API_KEY,
+          "X-RapidAPI-Host": RAPIDAPI_HOST,
+        },
       }
     );
 
     const data = await response.json();
-    if (data.errors) {
-      console.error("Amadeus API error:", data.errors);
-      return res.status(400).json(data.errors);
+    console.log("searchFlights response:", data);
+    if (!data.status) {
+      return res.status(500).json({ error: data.message || "Flight search failed." });
     }
 
-    res.json(data.data || []);
-  } catch (err) {
-    console.error("Flight search failed:", err);
-    res.status(500).json({ error: "Failed to fetch flight data" });
+    res.json(data.data);
+  } catch (error) {
+    console.error("searchFlights error:", error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+// 3. Get full flight details using token
+exports.getFlightDetails = async (req, res) => {
+  const { token, currency } = req.query;
+
+  if (!token) {
+    return res.status(400).json({ error: "Missing required query parameter: token." });
+  }
+
+  try {
+    const response = await fetch(
+      `${RAPIDAPI_BASE}/api/v1/flights/getFlightDetails?token=${encodeURIComponent(token)}&currency=${encodeURIComponent(currency || "USD")}`,
+      {
+        method: "GET",
+        headers: {
+          "X-RapidAPI-Key": process.env.RAPID_API_KEY,
+          "X-RapidAPI-Host": RAPIDAPI_HOST,
+        },
+      }
+    );
+
+    const data = await response.json();
+    if (!data.status) {
+      return res.status(500).json({ error: data.message || "Failed to get flight details." });
+    }
+
+    res.json(data.data);
+  } catch (error) {
+    console.error("getFlightDetails error:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };

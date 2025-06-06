@@ -15,14 +15,61 @@ import { useRouter } from "next/navigation";
 import { useAirportSearch } from "@/hooks/querys/useAirportSearch";
 import { useFlightOffersSearch } from "@/hooks/querys/useFlightOffersSearch";
 
+// TypeScript interfaces for flight data
+interface CarrierData {
+  logo?: string;
+  name?: string;
+}
+
+interface FlightInfo {
+  flightNumber?: string;
+}
+
 interface Airport {
-  iataCode: string;
-  name: string;
-  address: { cityName: string };
+  id?: string;
+  name?: string;
+  iataCode?: string;
+  code?: string;
+  cityName?: string;
+}
+
+interface Leg {
+  carriersData?: CarrierData[];
+  flightInfo?: FlightInfo;
+  departureAirport?: Airport;
+  arrivalAirport?: Airport;
+  departureTime?: string;
+  arrivalTime?: string;
+  cabinClass?: string;
+}
+
+interface Segment {
+  departureAirport?: Airport;
+  arrivalAirport?: Airport;
+  departureTime?: string;
+  arrivalTime?: string;
+  legs?: Leg[];
+}
+
+interface PriceBreakdown {
+  total?: { units: string; nanos?: number; currencyCode?: string };
+  unifiedPriceBreakdown?: {
+    price: { units: string; nanos?: number; currencyCode?: string };
+  };
+}
+
+interface FlightOffer {
+  token: string;
+  priceBreakdown?: PriceBreakdown;
+  unifiedPriceBreakdown?: {
+    price: { units: string; nanos?: number; currencyCode?: string };
+  };
+  segments?: Segment[];
+  validatingAirlineCodes?: string[];
 }
 
 export default function PlanesSearchPage() {
-  const { data: user, isError } = useCurrentUser();
+  const { data: user } = useCurrentUser();
   const router = useRouter();
 
   const [fromInput, setFromInput] = useState("");
@@ -32,54 +79,102 @@ export default function PlanesSearchPage() {
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
   const [adults, setAdults] = useState(1);
-  const [travelClass, setTravelClass] = useState<string>("");
+  const [travelClass, setTravelClass] = useState<string>("ECONOMY");
   const [nonStop, setNonStop] = useState(false);
 
-  const fromSearch = useAirportSearch(fromInput);
-  const toSearch = useAirportSearch(toInput);
+  // Only search airports if input is at least 3 characters and not already selected
+  const fromSearch = useAirportSearch(
+    fromInput.length >= 3 && !fromAirport ? fromInput : ""
+  );
+  const toSearch = useAirportSearch(
+    toInput.length >= 3 && !toAirport ? toInput : ""
+  );
 
   // For return date unlock
   const [enableReturn, setEnableReturn] = useState(false);
   const [searchTriggered, setSearchTriggered] = useState(false);
 
-  const {
-    data: flights,
-    isLoading: loadingFlights,
-    refetch: fetchFlights,
-  } = useFlightOffersSearch({
-    originLocationCode: fromAirport?.iataCode || "",
-    destinationLocationCode: toAirport?.iataCode || "",
-    departureDate,
-    returnDate: enableReturn && searchTriggered ? returnDate : undefined,
-    adults,
-    travelClass,
-    nonStop,
-  });
+  const userCurrency = user?.preferences.currency || "USD";
 
-  // Only fetch on button click
-  useEffect(() => {
-    // do nothing on mount
-  }, []);
+  // Only trigger search when the button is pressed and all fields are assigned
+  const [flightSearchParams, setFlightSearchParams] = useState<{
+    from: string;
+    to: string;
+    depart: string;
+    returnDate?: string;
+    adults: number;
+    cabinClass: string;
+    currency: string;
+  } | null>(null);
+
+  // Only require returnDate if round trip is selected
+  const canSearchFlights =
+    fromAirport &&
+    toAirport &&
+    departureDate &&
+    adults > 0 &&
+    userCurrency &&
+    (!enableReturn || returnDate);
+
+  const { data: flights, isLoading: loadingFlights } = useFlightOffersSearch(
+    canSearchFlights && flightSearchParams
+      ? flightSearchParams
+      : {
+          from: "",
+          to: "",
+          depart: "",
+          adults: 1,
+          cabinClass: "",
+          currency: userCurrency,
+        }
+  );
+  console.log("Flights data:", flights);
 
   const handleSearchFlights = () => {
-    setSearchTriggered(true);
-    fetchFlights();
+    if (canSearchFlights) {
+      setSearchTriggered(true);
+      setFlightSearchParams({
+        from: fromAirport.id,
+        to: toAirport.id,
+        depart: departureDate,
+        returnDate: enableReturn ? returnDate : undefined,
+        adults,
+        cabinClass: travelClass,
+        currency: userCurrency,
+      });
+      console.log(flights);
+    }
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("token")) {
+    if (!localStorage.getItem("token")) {
       router.push("/login");
     }
   }, [router]);
 
-  if (isError || !user) {
-    localStorage.removeItem("token");
-    return <Typography>Error loading profile</Typography>;
+  // Reset searchTriggered when any search field changes
+  useEffect(() => {
+    setSearchTriggered(false);
+  }, [
+    fromAirport,
+    toAirport,
+    departureDate,
+    returnDate,
+    adults,
+    travelClass,
+    nonStop,
+    enableReturn,
+  ]);
+
+  // Debug: print flightOffers to verify structure
+  if (flights?.data?.flightOffers) {
+    // eslint-disable-next-line no-console
+    console.log("flightOffers:", flights.data.flightOffers);
   }
 
   return (
     <>
-      <Navbar username={user.username} />
+      <Navbar username={user?.username} />
       <Box
         sx={{
           p: 4,
@@ -131,7 +226,7 @@ export default function PlanesSearchPage() {
           <Autocomplete
             options={fromSearch.data || []}
             getOptionLabel={(option) =>
-              `${option.address.cityName} (${option.iataCode})`
+              option.name ? `${option.name} (${option.code})` : option.code
             }
             onInputChange={(_, value) => setFromInput(value)}
             value={fromAirport}
@@ -142,7 +237,7 @@ export default function PlanesSearchPage() {
               <TextField
                 {...params}
                 label="From"
-                placeholder="Search city"
+                placeholder="Search city or airport"
                 sx={{ borderRadius: "10px" }}
               />
             )}
@@ -152,7 +247,9 @@ export default function PlanesSearchPage() {
           <Autocomplete
             options={toSearch.data || []}
             getOptionLabel={(option) =>
-              `${option.address.cityName} (${option.iataCode})`
+              option.name
+                ? `${option.name} (${option.iataCode})`
+                : option.iataCode
             }
             onInputChange={(_, value) => setToInput(value)}
             value={toAirport}
@@ -163,7 +260,7 @@ export default function PlanesSearchPage() {
               <TextField
                 {...params}
                 label="To"
-                placeholder="Search city"
+                placeholder="Search city or airport"
                 sx={{ borderRadius: "10px" }}
               />
             )}
@@ -223,7 +320,6 @@ export default function PlanesSearchPage() {
             SelectProps={{ native: true }}
             sx={{ background: "#fff", borderRadius: "10px", minWidth: 120 }}
           >
-            <option value="">Any</option>
             <option value="ECONOMY">Economy</option>
             <option value="PREMIUM_ECONOMY">Premium Economy</option>
             <option value="BUSINESS">Business</option>
@@ -258,7 +354,9 @@ export default function PlanesSearchPage() {
 
           <Button
             variant="contained"
-            disabled={!fromAirport || !toAirport || !departureDate || adults <= 0}
+            disabled={
+              !fromAirport || !toAirport || !departureDate || adults <= 0
+            }
             onClick={handleSearchFlights}
             sx={{
               fontWeight: 700,
@@ -284,62 +382,333 @@ export default function PlanesSearchPage() {
 
         {/* Results */}
         <Box sx={{ maxWidth: 900, mx: "auto" }}>
-          {loadingFlights ? (
+          {!searchTriggered ? (
+            <Typography align="center" color="#ededed" sx={{ py: 4 }}>
+              Please fill in the search fields and click &quot;Search
+              Flights&quot; to see results.
+            </Typography>
+          ) : loadingFlights ? (
             <Box sx={{ textAlign: "center", py: 4 }}>
               <CircularProgress />
               <Typography align="center" color="#ededed" sx={{ mt: 2 }}>
                 Loading flight results...
               </Typography>
             </Box>
-          ) : !flights || flights.length === 0 ? (
-            <Typography align="center" color="#ededed" sx={{ py: 4 }}>
-              No flight results yet.
+          ) : flights?.status === "error" ? (
+            <Typography align="center" color="#ff5252" sx={{ py: 4 }}>
+              {flights?.message || "An error occurred while fetching flights."}
             </Typography>
-          ) : (
-            (flights as Array<{ itineraries: Array<{ segments: Array<{ departure: { iataCode: string; at: string }; arrival: { iataCode: string; at: string } }> }>; price: { total: string; currency: string } }> ).map((flight, index) => (
-              <Box
-                key={index}
-                sx={{
-                  background: "#fffbe6",
-                  mb: 3,
-                  p: 3,
-                  borderRadius: "16px",
-                  boxShadow: "0 2px 8px rgba(255,215,0,0.10)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{ color: "#FFD700", fontWeight: 700 }}
-                >
-                  {flight.itineraries[0]?.segments[0]?.departure.iataCode} → {flight.itineraries[0]?.segments[flight.itineraries[0]?.segments.length-1]?.arrival.iataCode}
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 1 }}>
-                  {/* Outbound segments */}
-                  <Typography sx={{ color: '#232526', fontWeight: 600, fontSize: '1.05rem' }}>Outbound:</Typography>
-                  {flight.itineraries[0]?.segments.map((seg, i) => (
-                    <Typography key={i} sx={{ color: '#232526', fontSize: '0.98rem' }}>
-                      {seg.departure.iataCode} → {seg.arrival.iataCode} | {seg.departure.at?.slice(0,16).replace('T',' ')} → {seg.arrival.at?.slice(0,16).replace('T',' ')}
-                    </Typography>
-                  ))}
-                </Box>
-                {flight.itineraries[1] && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 1 }}>
-                    <Typography sx={{ color: '#232526', fontWeight: 600, fontSize: '1.05rem' }}>Return:</Typography>
-                    {flight.itineraries[1]?.segments.map((seg, i) => (
-                      <Typography key={i} sx={{ color: '#232526', fontSize: '0.98rem' }}>
-                        {seg.departure.iataCode} → {seg.arrival.iataCode} | {seg.departure.at?.slice(0,16).replace('T',' ')} → {seg.arrival.at?.slice(0,16).replace('T',' ')}
+          ) : flights?.flightOffers && flights.flightOffers.length > 0 ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {flights.flightOffers.map((offer: FlightOffer) => {
+                const priceObj =
+                  offer.priceBreakdown?.total ||
+                  offer.unifiedPriceBreakdown?.price;
+                const price = priceObj
+                  ? `${priceObj.units}${
+                      priceObj.nanos ? `.${priceObj.nanos / 10000000}` : ""
+                    }`
+                  : "N/A";
+                const currency = priceObj?.currencyCode || userCurrency;
+                // Use first available logo/name for card header
+                const firstLeg = offer.segments?.[0]?.legs?.[0];
+                const logo = firstLeg?.carriersData?.[0]?.logo;
+                const airlineName = firstLeg?.carriersData?.[0]?.name;
+                return (
+                  <Box
+                    key={offer.token}
+                    sx={{
+                      background: "#fffbe6",
+                      borderRadius: "20px",
+                      p: { xs: 2, sm: 3 },
+                      boxShadow: "0 4px 16px 0 rgba(255,215,0,0.10)",
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      gap: 3,
+                      alignItems: { xs: "flex-start", sm: "center" },
+                      transition: "box-shadow 0.2s, transform 0.2s",
+                      "&:hover": {
+                        boxShadow: "0 8px 32px 0 rgba(255,215,0,0.18)",
+                        transform: "scale(1.015)",
+                        cursor: "pointer",
+                      },
+                    }}
+                    onClick={() => {
+                      const params = new URLSearchParams({
+                        token: offer.token,
+                        currency: userCurrency,
+                        from: fromAirport?.code || "",
+                        to: toAirport?.code || "",
+                        departure_date: departureDate,
+                        return_date: enableReturn ? returnDate : "",
+                        adults: adults.toString(),
+                        travel_class: travelClass,
+                        non_stop: nonStop ? "1" : "0",
+                      });
+                      router.push(`/planes/flight-details?${params.toString()}`);
+                    }}
+                  >
+                    {logo && (
+                      <Box
+                        sx={{
+                          minWidth: 60,
+                          minHeight: 60,
+                          width: 60,
+                          height: 60,
+                          borderRadius: "12px",
+                          overflow: "hidden",
+                          mr: { sm: 3 },
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
+                          flexShrink: 0,
+                          background: "#eee",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <img
+                          src={logo}
+                          alt={airlineName || "Airline"}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                          }}
+                        />
+                      </Box>
+                    )}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: "Black",
+                          fontWeight: 700,
+                          fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                          mb: 0.5,
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                          whiteSpace: "nowrap",
+                          maxWidth: "100%",
+                        }}
+                      >
+                        {airlineName ||
+                          offer.validatingAirlineCodes?.join(", ") ||
+                          "Unknown Airline"}{" "}
+                        Flight
                       </Typography>
-                    ))}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mt: 0.5,
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            color: "Black",
+                            fontWeight: 700,
+                            fontSize: "1.08rem",
+                          }}
+                        >
+                          {price} {currency}
+                        </Typography>
+                      </Box>
+                      {offer.segments && offer.segments.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                          {offer.segments.map(
+                            (seg: Segment, segIdx: number) => (
+                              <Box
+                                key={segIdx}
+                                sx={{
+                                  mb: 2,
+                                  p: 2,
+                                  background: "#fff",
+                                  borderRadius: "12px",
+                                  boxShadow: "0 2px 8px 0 rgba(0,0,0,0.04)",
+                                }}
+                              >
+                                <Typography
+                                  variant="subtitle2"
+                                  sx={{
+                                    fontWeight: 600,
+                                    color: "#232526",
+                                    mb: 0.5,
+                                  }}
+                                >
+                                  Segment {segIdx + 1}:{" "}
+                                  {seg.departureAirport?.code} (
+                                  {seg.departureAirport?.cityName}) →{" "}
+                                  {seg.arrivalAirport?.code} (
+                                  {seg.arrivalAirport?.cityName})
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    color: "#555",
+                                    fontSize: "0.97rem",
+                                    mb: 1,
+                                  }}
+                                >
+                                  {seg.departureTime
+                                    ?.replace("T", " ")
+                                    .slice(0, 16)}{" "}
+                                  →{" "}
+                                  {seg.arrivalTime
+                                    ?.replace("T", " ")
+                                    .slice(0, 16)}
+                                </Typography>
+                                {seg.legs && seg.legs.length > 0 && (
+                                  <Box>
+                                    {seg.legs.map(
+                                      (leg: Leg, legIdx: number) => {
+                                        // Layover calculation
+                                        let layover = null;
+                                        if (
+                                          legIdx > 0 &&
+                                          seg.legs &&
+                                          seg.legs[legIdx - 1]?.arrivalTime &&
+                                          leg.departureTime
+                                        ) {
+                                          const prevLeg = seg.legs[legIdx - 1];
+                                          const prevArrival =
+                                            prevLeg.arrivalTime
+                                              ? new Date(prevLeg.arrivalTime)
+                                              : null;
+                                          const thisDeparture =
+                                            leg.departureTime
+                                              ? new Date(leg.departureTime)
+                                              : null;
+                                          if (prevArrival && thisDeparture) {
+                                            const diffSec =
+                                              (thisDeparture.getTime() -
+                                                prevArrival.getTime()) /
+                                              1000;
+                                            if (
+                                              !isNaN(diffSec) &&
+                                              diffSec > 0
+                                            ) {
+                                              const hours = Math.floor(
+                                                diffSec / 3600
+                                              );
+                                              const mins = Math.floor(
+                                                (diffSec % 3600) / 60
+                                              );
+                                              layover = `${
+                                                hours > 0 ? hours + "h " : ""
+                                              }${mins}m layover in ${
+                                                leg.departureAirport
+                                                  ?.cityName ||
+                                                leg.departureAirport?.code
+                                              }`;
+                                            }
+                                          }
+                                        }
+                                        return (
+                                          <React.Fragment key={legIdx}>
+                                            {layover && (
+                                              <Typography
+                                                sx={{
+                                                  color: "#bfa600",
+                                                  fontSize: "0.95rem",
+                                                  fontWeight: 500,
+                                                  mb: 0.5,
+                                                  mt: 1,
+                                                }}
+                                              >
+                                                {layover}
+                                              </Typography>
+                                            )}
+                                            <Box
+                                              sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 2,
+                                                mb: 1,
+                                              }}
+                                            >
+                                              {leg.carriersData?.[0]?.logo && (
+                                                <img
+                                                  src={leg.carriersData[0].logo}
+                                                  alt={
+                                                    leg.carriersData[0].name ||
+                                                    "Airline"
+                                                  }
+                                                  style={{
+                                                    width: 32,
+                                                    height: 32,
+                                                    objectFit: "contain",
+                                                    borderRadius: 6,
+                                                    background: "#f5f5f5",
+                                                  }}
+                                                />
+                                              )}
+                                              <Box>
+                                                <Typography
+                                                  sx={{
+                                                    fontWeight: 500,
+                                                    color: "#232526",
+                                                    fontSize: "1.01rem",
+                                                  }}
+                                                >
+                                                  {leg.carriersData?.[0]
+                                                    ?.name ||
+                                                    "Unknown Airline"}{" "}
+                                                  {leg.flightInfo?.flightNumber
+                                                    ? `#${leg.flightInfo.flightNumber}`
+                                                    : ""}
+                                                </Typography>
+                                                <Typography
+                                                  sx={{
+                                                    color: "#555",
+                                                    fontSize: "0.96rem",
+                                                  }}
+                                                >
+                                                  {leg.departureAirport?.code} (
+                                                  {
+                                                    leg.departureAirport
+                                                      ?.cityName
+                                                  }
+                                                  ){" "}
+                                                  {leg.departureTime
+                                                    ?.replace("T", " ")
+                                                    .slice(0, 16)}{" "}
+                                                  → {leg.arrivalAirport?.code} (
+                                                  {leg.arrivalAirport?.cityName}
+                                                  ){" "}
+                                                  {leg.arrivalTime
+                                                    ?.replace("T", " ")
+                                                    .slice(0, 16)}
+                                                </Typography>
+                                                <Typography
+                                                  sx={{
+                                                    color: "#888",
+                                                    fontSize: "0.93rem",
+                                                  }}
+                                                >
+                                                  Cabin: {leg.cabinClass || "-"}
+                                                </Typography>
+                                              </Box>
+                                            </Box>
+                                          </React.Fragment>
+                                        );
+                                      }
+                                    )}
+                                  </Box>
+                                )}
+                              </Box>
+                            )
+                          )}
+                        </Box>
+                      )}
+                    </Box>
                   </Box>
-                )}
-                <Typography sx={{ color: "#232526", fontWeight: 500 }}>
-                  Price: {flight.price?.total} {flight.price?.currency}
-                </Typography>
-              </Box>
-            ))
+                );
+              })}
+            </Box>
+          ) : (
+            <Typography align="center" color="#ededed" sx={{ py: 4 }}>
+              No results found for your search.
+            </Typography>
           )}
         </Box>
       </Box>

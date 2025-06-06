@@ -1,59 +1,53 @@
 import { useQuery } from "@tanstack/react-query";
 
 interface FlightOffersParams {
-  originLocationCode: string;
-  destinationLocationCode: string;
-  departureDate: string;
+  from: string;
+  to: string;
+  depart: string;
   returnDate?: string;
   adults: number;
-  travelClass?: string;
-  nonStop?: boolean;
+  cabinClass?: string;
+  currency?: string;
 }
 
 export const useFlightOffersSearch = ({
-  originLocationCode,
-  destinationLocationCode,
-  departureDate,
+  from,
+  to,
+  depart,
   returnDate,
   adults,
-  travelClass,
-  nonStop,
+  cabinClass,
+  currency,
 }: FlightOffersParams) => {
   return useQuery({
     queryKey: [
       "flightOffersSearch",
-      originLocationCode,
-      destinationLocationCode,
-      departureDate,
+      from,
+      to,
+      depart,
       returnDate,
       adults,
-      travelClass,
-      nonStop,
+      cabinClass,
+      currency,
     ],
     queryFn: async () => {
       const params = new URLSearchParams({
-        originLocationCode,
-        destinationLocationCode,
-        departureDate,
+        from,
+        to,
+        depart,
         adults: adults.toString(),
       });
       if (returnDate) params.append("returnDate", returnDate);
-      if (travelClass) params.append("travelClass", travelClass);
-      if (nonStop) params.append("nonStop", "true");
-
+      if (cabinClass) params.append("cabinClass", cabinClass);
+      if (currency) params.append("currency", currency);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/flights/offers?${params}`
       );
-
+      console.log(res);
       if (!res.ok) throw new Error("Failed to fetch flight offers");
-
       return res.json();
     },
-    enabled:
-      !!originLocationCode &&
-      !!destinationLocationCode &&
-      !!departureDate &&
-      adults > 0,
+    enabled: !!from && !!to && !!depart && adults > 0,
     staleTime: 1000 * 60 * 5,
   });
 };

@@ -9,7 +9,7 @@ export const useSearchDestination = (query: string) => {
       const res = await fetchWithAuth(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL
-        }/search-destination?query=${encodeURIComponent(query)}`,
+        }/stays/search-destination?query=${encodeURIComponent(query)}`,
         token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
       );
       if (!res.ok) throw new Error("Failed to fetch destinations");

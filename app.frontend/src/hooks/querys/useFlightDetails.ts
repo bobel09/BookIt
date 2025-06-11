@@ -14,7 +14,7 @@ export const useFlightDetails = ({ token, currency }: FlightDetailsParams) => {
       if (currency) params.append("currency", currency);
       const url = `${
         process.env.NEXT_PUBLIC_API_BASE_URL
-      }/flight-details?${params.toString()}`;
+      }/fligts/flight-details?${params.toString()}`;
       const res = await fetchWithAuth(url);
       if (!res.ok) throw new Error("Failed to fetch flight details");
       return res.json();

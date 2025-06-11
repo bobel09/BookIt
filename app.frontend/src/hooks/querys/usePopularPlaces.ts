@@ -9,7 +9,7 @@ export const usePopularPlaces = (city: string) => {
       const res = await fetchWithAuth(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL
-        }/popular-places?city=${encodeURIComponent(city)}`,
+        }/places/popular-places?city=${encodeURIComponent(city)}`,
         token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
       );
 

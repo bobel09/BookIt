@@ -36,7 +36,7 @@ export const useHotelDetails = ({
       const token = localStorage.getItem("token");
       const url = `${
         process.env.NEXT_PUBLIC_API_BASE_URL
-      }/hotel-details?${params.toString()}`;
+      }/stays/hotel-details?${params.toString()}`;
       const res = await fetchWithAuth(
         url,
         token ? { headers: { Authorization: `Bearer ${token}` } } : undefined

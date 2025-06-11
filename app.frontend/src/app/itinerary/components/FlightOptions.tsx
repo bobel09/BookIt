@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography, Autocomplete, TextField } from "@mui/material";
-import type { Airport } from "../../../../shared/types/flightDetails";
+import type { Airport } from "@shared/types/flightDetails";
 import InPageLoader from "@/components/InPageLoader";
 
 interface FlightOptionsProps {

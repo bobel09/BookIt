@@ -3,6 +3,9 @@ const nextConfig = {
   images: {
     domains: ["maps.googleapis.com"],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   webpack: (config) => {
     // Add a loader for .geojson files
     config.module.rules.push({

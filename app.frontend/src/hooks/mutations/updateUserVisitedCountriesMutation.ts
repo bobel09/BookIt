@@ -28,7 +28,6 @@ export const useUpdateVisitedCountries = (userId: string) => {
       updateVisitedCountries(userId, countries),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-      alert("Visited countries updated!");
     },
     onError: (error: unknown) => {
       if (error instanceof Error) {

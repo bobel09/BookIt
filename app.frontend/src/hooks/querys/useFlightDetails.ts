@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 interface FlightDetailsParams {
   token: string;
@@ -11,9 +12,10 @@ export const useFlightDetails = ({ token, currency }: FlightDetailsParams) => {
     queryFn: async () => {
       const params = new URLSearchParams({ token });
       if (currency) params.append("currency", currency);
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/flights/details?${params}`
-      );
+      const url = `${
+        process.env.NEXT_PUBLIC_API_BASE_URL
+      }/flight-details?${params.toString()}`;
+      const res = await fetchWithAuth(url);
       if (!res.ok) throw new Error("Failed to fetch flight details");
       return res.json();
     },

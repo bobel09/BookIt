@@ -13,12 +13,23 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
+import Notification from "@/components/Notification";
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,11 +54,28 @@ export default function LoginPage() {
     if (token) {
       router.push("/dashboard");
     }
+    // Show notification if redirected due to expired JWT
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("expired") === "1") {
+        setNotification({
+          open: true,
+          message: "Your session expired. Please log in again.",
+          severity: "info",
+        });
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="min-h-screen flex bg-[#1b1b1b] text-white">
+      <Notification
+        open={notification.open}
+        message={notification.message}
+        severity={notification.severity}
+        onClose={() => setNotification({ ...notification, open: false })}
+      />
       <div className="w-full max-w-md bg-[#252525] flex flex-col items-center justify-center px-10 py-12 shadow-md">
         <Image
           src="/paper_airplane.svg"
@@ -110,9 +138,6 @@ export default function LoginPage() {
                 <Typography sx={{ color: "#fff" }}>Remember me?</Typography>
               }
             />
-            <a href="#" className="text-sm text-yellow-400 hover:underline">
-              Forgot your password?
-            </a>
           </div>
 
           <Button
@@ -143,9 +168,9 @@ export default function LoginPage() {
         </Typography>
       </div>
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative hidden md:block">
         <Image
-          src="/nyc_night.jpg"
+          src="/nyc3.jpg"
           alt="City Street"
           layout="fill"
           objectFit="cover"

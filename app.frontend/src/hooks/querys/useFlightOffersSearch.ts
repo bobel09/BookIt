@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 interface FlightOffersParams {
   from: string;
@@ -40,8 +41,12 @@ export const useFlightOffersSearch = ({
       if (returnDate) params.append("returnDate", returnDate);
       if (cabinClass) params.append("cabinClass", cabinClass);
       if (currency) params.append("currency", currency);
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/flights/offers?${params}`
+      const token = localStorage.getItem("token");
+      const res = await fetchWithAuth(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL
+        }/flight-offers-search?${params.toString()}`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
       );
       console.log(res);
       if (!res.ok) throw new Error("Failed to fetch flight offers");

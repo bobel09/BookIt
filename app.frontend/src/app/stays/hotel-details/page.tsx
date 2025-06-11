@@ -1,14 +1,16 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Typography, CircularProgress, Button } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { useHotelDetails } from "@/hooks/querys/useHotelDetails";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
+import FullPageLoader from "@/components/FullPageLoader";
+import ErrorPage from "../../error";
 
 export default function HotelDetailsPage() {
-  const { data: user, isError } = useCurrentUser();
+  const { data: user, isLoading: userLoading, isError } = useCurrentUser();
   const router = useRouter();
   const params = useSearchParams();
   const hotel_id = params.get("hotel_id") || "";
@@ -26,43 +28,24 @@ export default function HotelDetailsPage() {
     arrival_date,
     departure_date,
     adults,
+    currency: user?.preferences?.currency || "USD",
   });
 
+  if (userLoading) return <FullPageLoader text="Loading profile..." />;
   if (isError || !user) {
-    return <Typography>Error loading profile</Typography>;
+    return <ErrorPage />;
   }
 
   if (!hotel_id || !arrival_date || !departure_date || !adults) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Typography color="error">
-          Missing hotel or search parameters.
-        </Typography>
-        <Button onClick={() => router.back()} sx={{ mt: 2 }}>
-          Back
-        </Button>
-      </Box>
-    );
+    return <ErrorPage />;
   }
 
   if (isLoading) {
-    return (
-      <Box sx={{ p: 4, textAlign: "center" }}>
-        <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Loading hotel details...</Typography>
-      </Box>
-    );
+    return <FullPageLoader text="Loading hotel details..." />;
   }
 
   if (error || !data) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Typography color="error">Failed to load hotel details.</Typography>
-        <Button onClick={() => router.back()} sx={{ mt: 2 }}>
-          Back
-        </Button>
-      </Box>
-    );
+    return <ErrorPage />;
   }
 
   // Extract details from API response
@@ -177,7 +160,7 @@ export default function HotelDetailsPage() {
           )}
           <Typography
             variant="h4"
-            sx={{ color: "#FFD700", fontWeight: 700, mb: 1 }}
+            sx={{ color: "black", fontWeight: 700, mb: 1 }}
           >
             {hotel.name || data.data?.hotel_name}
           </Typography>
@@ -221,16 +204,14 @@ export default function HotelDetailsPage() {
           {price && (
             <Typography
               sx={{
-                color: "#232526",
+                color: "black",
                 fontWeight: 600,
                 fontSize: "1.15rem",
                 mb: 1,
               }}
             >
               Price for your stay:{" "}
-              <span style={{ color: "#FFD700" }}>
-                {price} {currency}
-              </span>
+              <span style={{ color: "black" }}>{price}</span>
             </Typography>
           )}
           {/* Facilities */}

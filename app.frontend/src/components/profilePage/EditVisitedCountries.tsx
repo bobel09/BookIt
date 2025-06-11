@@ -19,22 +19,40 @@ export const ALL_COUNTRIES_NAMES = allCountryData.map(
 export default function VisitedCountriesManager({
   userId,
   visitedCountries,
+  onSuccess,
+  onError,
 }: {
   userId: string;
   visitedCountries: string[];
+  onSuccess?: () => void;
+  onError?: () => void;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const { mutate: updateCountries } = useUpdateVisitedCountries(userId);
 
   const handleAdd = () => {
     const combined = Array.from(new Set([...visitedCountries, ...selected]));
-    updateCountries(combined);
-    setSelected([]);
+    updateCountries(combined, {
+      onSuccess: () => {
+        setSelected([]);
+        if (onSuccess) onSuccess();
+      },
+      onError: () => {
+        if (onError) onError();
+      },
+    });
   };
 
   const handleRemove = (country: string) => {
     const updated = visitedCountries.filter((c) => c !== country);
-    updateCountries(updated);
+    updateCountries(updated, {
+      onSuccess: () => {
+        if (onSuccess) onSuccess();
+      },
+      onError: () => {
+        if (onError) onError();
+      },
+    });
   };
 
   return (

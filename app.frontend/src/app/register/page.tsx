@@ -269,9 +269,9 @@ export default function RegisterPage() {
         </Typography>
       </div>
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative hidden md:block">
         <Image
-          src="/nyc_night.jpg"
+          src="/nyc4.jpeg"
           alt="City Street"
           layout="fill"
           objectFit="cover"

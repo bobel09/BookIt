@@ -36,11 +36,15 @@ const foodOptions = [
 type Props = {
   userId: string;
   initialPreferences: Preferences;
+  onSuccess?: () => void;
+  onError?: () => void;
 };
 
 export default function EditPreferencesForm({
   userId,
   initialPreferences,
+  onSuccess,
+  onError,
 }: Props) {
   const [currency, setCurrency] = useState("USD");
   const [interests, setInterests] = useState<string[]>([]);
@@ -85,7 +89,14 @@ export default function EditPreferencesForm({
       climate,
       tripStyle,
     };
-    updatePreferences.mutate(updated);
+    updatePreferences.mutate(updated, {
+      onSuccess: () => {
+        if (onSuccess) onSuccess();
+      },
+      onError: () => {
+        if (onError) onError();
+      },
+    });
   };
 
   return (

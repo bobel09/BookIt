@@ -16,4 +16,5 @@ export type User = {
   email: string;
   preferences: Preferences;
   visitedCountries: string[];
+  wishlist: string[];
 };

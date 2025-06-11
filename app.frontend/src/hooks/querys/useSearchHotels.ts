@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 interface SearchParams {
   currency: string;
@@ -24,10 +25,12 @@ export const useSearchHotels = (
         room_qty: params.room_qty.toString(),
         currency: params.currency || "USD",
       });
-      const res = await fetch(
+      const token = localStorage.getItem("token");
+      const res = await fetchWithAuth(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL
-        }/stays/hotels?${searchParams.toString()}`
+        }/stays/hotels?${searchParams.toString()}`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
       );
       if (!res.ok) throw new Error("Failed to fetch hotels");
       return res.json();

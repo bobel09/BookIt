@@ -161,6 +161,25 @@ const updateVisitedCountries = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const updateWishlist = async (req, res) => {
+  const userId = req.params.id;
+  const { wishlist } = req.body;
+
+  try {
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { wishlist },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updated) return res.status(404).json({ message: "User not found" });
+
+    res.json(updated);
+  } catch (err) {
+    console.error("Error updating wishlist:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 module.exports = {
@@ -170,5 +189,6 @@ module.exports = {
   checkUsername,
   getCurrentUser,
   patchUserPreferences,
-  updateVisitedCountries
+  updateVisitedCountries,
+  updateWishlist
 };

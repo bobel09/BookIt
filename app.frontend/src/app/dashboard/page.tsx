@@ -1,6 +1,13 @@
 "use client";
 
-import { Autocomplete, Box, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  Box,
+  TextField,
+  Typography,
+  Button,
+  IconButton,
+} from "@mui/material";
 import {
   ComposableMap,
   Geographies,
@@ -12,11 +19,28 @@ import Navbar from "../../components/Navbar";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
 import { ALL_COUNTRIES_NAMES } from "../../components/profilePage/EditVisitedCountries";
+import TravelStats from "../../components/TravelStats";
+import { useUpdateUserWishlist } from "@/hooks/mutations/updateUserWishlist";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import WishlistStats from "@/components/WishlistStats";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { useUpdateVisitedCountries } from "@/hooks/mutations/updateUserVisitedCountriesMutation";
+import Notification from "@/components/Notification";
+import Footer from "@/components/Footer";
+import InPageLoader from "@/components/InPageLoader";
+import FullPageLoader from "@/components/FullPageLoader";
+import AiDestinationSuggestions from "@/components/AiDestinationSuggestions";
+import { useTheme, useMediaQuery } from "@mui/material";
+import ErrorPage from "../error";
 
 const geoJsonUrl = "/ne_110m_admin_0_countries.geojson";
 
 export default function WelcomePage() {
   const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [worldData, setWorldData] = useState<any>(undefined);
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
@@ -26,9 +50,19 @@ export default function WelcomePage() {
   const [searchValue, setSearchValue] = useState<string | null>(null);
 
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [zoomLevel] = useState(2);
+  // const [zoomLevel] = useState(2);
   const [center] = useState<[number, number]>([0, 20]);
   const { data: user, isLoading, isError } = useCurrentUser();
+  const wishlist = user?.wishlist || [];
+  const { mutate: updateWishlist, isPending: wishlistLoading } =
+    useUpdateUserWishlist();
+  const { mutate: updateVisitedCountries, isPending: visitedLoading } =
+    useUpdateVisitedCountries(user?._id || "");
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,26 +95,56 @@ export default function WelcomePage() {
       setSelectedCountry(null);
     }
   };
-  if (!worldData) return <Typography>Loading map...</Typography>;
+  if (!worldData) return <FullPageLoader text="Loading map..." />;
 
-  if (isLoading) return <Typography>Loading...</Typography>;
-  if (isError || !user) {
-    localStorage.removeItem("token");
-    return <Typography>Error loading profile</Typography>;
-  }
+  if (isLoading) return <FullPageLoader text="Loading profile..." />;
+  if (isError || !user) return <ErrorPage />;
 
   const visitedCountries = user.visitedCountries || [];
+
+  // Responsive map scale and zoom
+  let mapScale = 200;
+  let initialZoom = 2;
+  let maxZoom = 5;
+  if (isMobile) {
+    mapScale = 300;
+    maxZoom = 40;
+  } else if (isTablet) {
+    mapScale = 380;
+    initialZoom = 2;
+    maxZoom = 5;
+  } else {
+    mapScale = 300;
+    initialZoom = 2;
+    maxZoom = 5;
+  }
+  let mapWidth = "100%";
+  if (!isMobile && !isTablet) mapWidth = "1500px";
 
   return (
     <>
       <Navbar username={user.username} />
       <Box
         sx={{
-          width: "100%",
-          height: "100vh",
-          position: "relative",
+          minHeight: "100vh",
+          width: "100vw",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: -1,
           background:
             "linear-gradient(120deg, #232526 0%, #1e1e1e 60%, #101010 100%)",
+          overflowX: "hidden",
+        }}
+      />
+      <Box
+        sx={{
+          width: "100vw",
+          minHeight: "100vh",
+          position: "relative",
+          zIndex: 1,
+          overflowX: "hidden",
+          maxWidth: "100vw",
         }}
       >
         <Box
@@ -88,54 +152,70 @@ export default function WelcomePage() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
+            px: { xs: 1, sm: 2, md: 0 },
+            width: "100vw",
+            maxWidth: "100vw",
+            overflowX: "hidden",
           }}
         >
           <Box
             sx={{
-              width: "75%",
+              width: "100%",
+              maxWidth: 1500,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              mt: 4,
-              mb: 2,
-              py: 4,
+              mt: { xs: 2, md: 4 },
+              mb: { xs: 1, md: 2 },
+              py: { xs: 2, md: 4 },
               background: "#fff",
-              borderRadius: "18px",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+              borderRadius: { xs: "10px", md: "18px" },
+              border: "1.5px solid #ececec",
+              boxShadow: "0 2px 12px 0 rgba(30,30,30,0.06)",
               transition:
                 "transform 0.25s cubic-bezier(.4,2,.6,1), box-shadow 0.25s cubic-bezier(.4,2,.6,1)",
               "&:hover": {
-                transform: "scale(1.025)",
-                boxShadow: "0 8px 36px 0 rgba(0,0,0,0.12)",
+                transform: { xs: "none", md: "scale(1.025)" },
+                boxShadow: {
+                  xs: "0 2px 12px 0 rgba(30,30,30,0.06)",
+                  md: "0 8px 36px 0 rgba(0,0,0,0.12)",
+                },
                 cursor: "pointer",
               },
+              overflowX: "hidden",
             }}
           >
             <Typography
               sx={{
                 fontFamily: "Inter, sans-serif",
-                fontSize: { xs: "2.2rem", md: "2.8rem" },
+                fontSize: { xs: "1.5rem", sm: "2.2rem", md: "2.8rem" },
                 fontWeight: 800,
                 color: "#232526",
                 letterSpacing: 1,
-                mb: 1,
+                mb: 1.2,
                 textAlign: "center",
                 textShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                lineHeight: 1.18,
               }}
             >
-              Where to Next?
+              Where to{" "}
+              <Box component="span" sx={{ color: "#FFD700", fontWeight: 900 }}>
+                Next?
+              </Box>
             </Typography>
             <Typography
               sx={{
                 fontFamily: "Inter, sans-serif",
-                fontSize: { xs: "1rem", md: "1.2rem" },
-                color: "#666",
+                fontSize: { xs: "0.98rem", sm: "1.08rem", md: "1.18rem" },
+                color: "#6c6c6c",
                 fontWeight: 400,
                 textAlign: "center",
                 letterSpacing: 0.5,
                 mt: 0.5,
-                mb: 3,
+                mb: { xs: 2, md: 3.2 },
+                lineHeight: 1.6,
+                maxWidth: 520,
               }}
             >
               Explore the world. Plan your next adventure.
@@ -147,6 +227,7 @@ export default function WelcomePage() {
               sx={{
                 width: "100%",
                 maxWidth: 500,
+                minWidth: { xs: 0, sm: 220 },
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "16px",
                   background: "#f7f7f7",
@@ -159,7 +240,7 @@ export default function WelcomePage() {
                   "& input": {
                     fontFamily: "Inter, sans-serif",
                     fontWeight: 500,
-                    fontSize: "1.1rem",
+                    fontSize: { xs: "0.98rem", sm: "1.1rem" },
                   },
                 },
                 "& .MuiInputAdornment-root": {
@@ -226,39 +307,266 @@ export default function WelcomePage() {
               )}
             />
             {selectedCountry && (
-              <Box sx={{ mt: 3, display: "flex", justifyContent: "center" }}>
+              <Box
+                sx={{
+                  mt: 3,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    sx={{
+                      background:
+                        "linear-gradient(90deg, #FFD700 60%, #ffe066 100%)",
+                      color: "#232526",
+                      fontWeight: 700,
+                      fontSize: "1rem",
+                      borderRadius: "30px",
+                      px: 3,
+                      boxShadow: "0 2px 8px #ffe06655",
+                      "&:hover": {
+                        background:
+                          "linear-gradient(90deg, #e6c200 60%, #ffe066 100%)",
+                      },
+                    }}
+                    onClick={() =>
+                      router.push(`/popular-places?country=${selectedCountry}`)
+                    }
+                  >
+                    🚀 Make it Happen
+                  </Button>
+                  <IconButton
+                    aria-label={
+                      wishlist.includes(selectedCountry)
+                        ? "Remove from wishlist"
+                        : "Add to wishlist"
+                    }
+                    onClick={() => {
+                      if (wishlist.includes(selectedCountry)) {
+                        updateWishlist(
+                          {
+                            userId: user._id,
+                            wishlist: wishlist.filter(
+                              (c: string) => c !== selectedCountry
+                            ),
+                          },
+                          {
+                            onSuccess: () =>
+                              setSnackbar({
+                                open: true,
+                                message: `Removed from wishlist!`,
+                                severity: "success",
+                              }),
+                            onError: () =>
+                              setSnackbar({
+                                open: true,
+                                message: `Failed to update wishlist.`,
+                                severity: "error",
+                              }),
+                          }
+                        );
+                      } else {
+                        if (visitedCountries.includes(selectedCountry)) {
+                          setSnackbar({
+                            open: true,
+                            message:
+                              "You can't wishlist a country you've already visited!",
+                            severity: "error",
+                          });
+                          return;
+                        }
+                        updateWishlist(
+                          {
+                            userId: user._id,
+                            wishlist: [...wishlist, selectedCountry],
+                          },
+                          {
+                            onSuccess: () =>
+                              setSnackbar({
+                                open: true,
+                                message: `Added to wishlist!`,
+                                severity: "success",
+                              }),
+                            onError: () =>
+                              setSnackbar({
+                                open: true,
+                                message: `Failed to update wishlist.`,
+                                severity: "error",
+                              }),
+                          }
+                        );
+                      }
+                    }}
+                    disabled={wishlistLoading}
+                    sx={{
+                      background: wishlist.includes(selectedCountry)
+                        ? "#ffeaea"
+                        : "#fffbe6",
+                      color: wishlist.includes(selectedCountry)
+                        ? "#d32f2f"
+                        : "#d32f2f",
+                      borderRadius: "50%",
+                      boxShadow: wishlist.includes(selectedCountry)
+                        ? "0 2px 8px #ffb3b3"
+                        : "0 2px 8px #ffe06655",
+                      border: wishlist.includes(selectedCountry)
+                        ? "2px solid #d32f2f"
+                        : "2px solid #ffd700",
+                      ml: 1,
+                      "&:hover": {
+                        background: wishlist.includes(selectedCountry)
+                          ? "#ffd6d6"
+                          : "#ffe066",
+                      },
+                    }}
+                  >
+                    {wishlist.includes(selectedCountry) ? (
+                      <FavoriteIcon fontSize="medium" />
+                    ) : (
+                      <FavoriteBorderIcon fontSize="medium" />
+                    )}
+                  </IconButton>
+                  <IconButton
+                    aria-label={
+                      visitedCountries.includes(selectedCountry)
+                        ? "Remove from visited"
+                        : "Mark as visited"
+                    }
+                    onClick={() => {
+                      if (visitedCountries.includes(selectedCountry)) {
+                        // Remove from visited
+                        updateVisitedCountries(
+                          visitedCountries.filter(
+                            (c: string) => c !== selectedCountry
+                          ),
+                          {
+                            onSuccess: () =>
+                              setSnackbar({
+                                open: true,
+                                message: `Removed from visited!`,
+                                severity: "success",
+                              }),
+                            onError: () =>
+                              setSnackbar({
+                                open: true,
+                                message: `Failed to update visited countries.`,
+                                severity: "error",
+                              }),
+                          }
+                        );
+                      } else {
+                        if (wishlist.includes(selectedCountry)) {
+                          setSnackbar({
+                            open: true,
+                            message:
+                              "You can't mark as visited a country that's in your wishlist!",
+                            severity: "error",
+                          });
+                          return;
+                        }
+                        updateVisitedCountries(
+                          [...visitedCountries, selectedCountry],
+                          {
+                            onSuccess: () =>
+                              setSnackbar({
+                                open: true,
+                                message: `Marked as visited!`,
+                                severity: "success",
+                              }),
+                            onError: () =>
+                              setSnackbar({
+                                open: true,
+                                message: `Failed to update visited countries.`,
+                                severity: "error",
+                              }),
+                          }
+                        );
+                      }
+                    }}
+                    disabled={visitedLoading}
+                    sx={{
+                      background: visitedCountries.includes(selectedCountry)
+                        ? "#e0f7fa"
+                        : "#f7ffe6",
+                      color: visitedCountries.includes(selectedCountry)
+                        ? "#007bff"
+                        : "#007bff",
+                      borderRadius: "50%",
+                      boxShadow: visitedCountries.includes(selectedCountry)
+                        ? "0 2px 8px #b3e5fc"
+                        : "0 2px 8px #e0ffb3",
+                      border: visitedCountries.includes(selectedCountry)
+                        ? "2px solid #007bff"
+                        : "2px solid #4caf50",
+                      ml: 1,
+                      "&:hover": {
+                        background: visitedCountries.includes(selectedCountry)
+                          ? "#b3e5fc"
+                          : "#e0ffb3",
+                      },
+                    }}
+                  >
+                    <CheckCircleIcon fontSize="medium" />
+                  </IconButton>
+                </Box>
                 <Box
                   sx={{
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "12px 32px",
-                    backgroundColor: "yellow  ",
-                    color: "black",
-                    fontWeight: 600,
-                    fontSize: "1rem",
-                    borderRadius: "50px",
-                    boxShadow: "0 4px 16px rgba(0, 123, 255, 0.3)",
-                    transition: "all 0.3s ease",
-                    cursor: "pointer",
-                    "&:hover": {
-                      backgroundColor: "gray",
-                      transform: "translateY(-2px)",
-                      boxShadow: "0 6px 24px rgba(0, 123, 255, 0.4)",
-                    },
-                  }}
-                  onClick={() => {
-                    router.push(`/popular-places?country=${selectedCountry}`);
+                    flexDirection: "row",
+                    gap: 3,
+                    mt: 0.5,
                   }}
                 >
-                  🚀 Make it Happen
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: wishlist.includes(selectedCountry)
+                        ? "#d32f2f"
+                        : "#888",
+                    }}
+                  >
+                    {wishlist.includes(selectedCountry)
+                      ? "In your wishlist"
+                      : "Add to wishlist"}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: visitedCountries.includes(selectedCountry)
+                        ? "#007bff"
+                        : "#888",
+                    }}
+                  >
+                    {visitedCountries.includes(selectedCountry)
+                      ? "Visited"
+                      : "Mark as visited"}
+                  </Typography>
                 </Box>
               </Box>
             )}
+            <Notification
+              open={snackbar.open}
+              message={snackbar.message}
+              severity={snackbar.severity}
+              onClose={() => setSnackbar({ ...snackbar, open: false })}
+            />
           </Box>
         </Box>
-
-        <Box sx={{ display: "flex", height: "50%", marginTop: "20px" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            height: { xs: "auto", md: "50%" },
+            marginTop: { xs: 2, md: "20px" },
+            width: "100vw",
+            maxWidth: "100vw",
+            overflowX: "hidden",
+          }}
+        >
           {/* Map Section */}
           <Box
             sx={{
@@ -266,23 +574,27 @@ export default function WelcomePage() {
               position: "relative",
               justifyContent: "center",
               display: "flex",
+              width: "100vw",
+              maxWidth: "100vw",
+              overflowX: "auto",
             }}
           >
             <ComposableMap
-              projectionConfig={{ scale: 200 }}
+              projectionConfig={{ scale: mapScale }}
               style={{
-                width: "90%",
-                height: "500px",
+                width: mapWidth,
+                maxWidth: "100vw",
+                height: "350px",
                 borderRadius: "20px",
                 border: "1px solid rgb(60, 60, 59)",
                 backgroundColor: "#f0f0f0",
               }}
             >
               <ZoomableGroup
-                zoom={zoomLevel}
+                zoom={initialZoom}
                 center={center}
                 minZoom={2}
-                maxZoom={5}
+                maxZoom={maxZoom}
               >
                 <Geographies geography={worldData}>
                   {({ geographies }) =>
@@ -293,7 +605,9 @@ export default function WelcomePage() {
                       const isVisited = visitedCountries.includes(
                         geo.properties.NAME
                       );
-
+                      const isWishlisted = wishlist.includes(
+                        geo.properties.NAME
+                      );
                       return (
                         <Geography
                           key={geo.rsmKey}
@@ -318,6 +632,8 @@ export default function WelcomePage() {
                                 ? "#4caf50"
                                 : isVisited
                                 ? "#007bff"
+                                : isWishlisted
+                                ? "#d32f2f"
                                 : "#d6d6d6",
                               stroke: "#333",
                               strokeWidth: 0.5,
@@ -373,19 +689,27 @@ export default function WelcomePage() {
         <Box
           sx={{
             width: "100%",
-            py: 2,
-            mt: 20,
-            color: "black",
-            textAlign: "center",
-            fontSize: "1rem",
-            letterSpacing: 0.5,
-            left: 0,
-            bottom: 0,
-            zIndex: 1200,
+            display: "flex",
+            justifyContent: "center",
+            mt: 4,
           }}
         >
-          &copy; {new Date().getFullYear()} Book It. All rights reserved.
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: 1500,
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              alignItems: { xs: "center", md: "flex-start" },
+              gap: 4,
+            }}
+          >
+            <TravelStats visitedCountries={visitedCountries} />
+            <WishlistStats wishlist={wishlist} />
+          </Box>
         </Box>
+        <AiDestinationSuggestions />
+        <Footer />
       </Box>
     </>
   );

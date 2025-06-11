@@ -1,19 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export const usePopularPlaces = (city: string) => {
   return useQuery({
     queryKey: ["popularPlaces", city],
     queryFn: async () => {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("User not authenticated");
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/places/popular-places?city=${city}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const res = await fetchWithAuth(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL
+        }/popular-places?city=${encodeURIComponent(city)}`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
       );
 
       if (!res.ok) throw new Error("Failed to fetch popular places");

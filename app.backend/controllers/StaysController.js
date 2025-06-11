@@ -33,7 +33,7 @@ exports.searchHotels = async (req, res) => {
       departure_date: checkout_date,
       adults,
       room_qty,
-      currency: currency || "USD",
+      currency_code: currency || "USD",
     });
     const url = `${BASE_URL}/api/v1/hotels/searchHotels?${params.toString()}`;
     const response = await fetch(url, {
@@ -52,9 +52,10 @@ exports.searchHotels = async (req, res) => {
 
 // Get hotel details
 exports.getHotelDetails = async (req, res) => {
-  const { hotel_id, arrival_date, departure_date, adults } = req.query;
+  const { hotel_id, arrival_date, departure_date, adults, currency_code } = req.query;
+  console.log("currency", currency_code);
   try {
-    const url = `${BASE_URL}/api/v1/hotels/getHotelDetails?hotel_id=${encodeURIComponent(hotel_id)}&arrival_date=${encodeURIComponent(arrival_date)}&departure_date=${encodeURIComponent(departure_date)}&adults=${encodeURIComponent(adults)}`;
+    const url = `${BASE_URL}/api/v1/hotels/getHotelDetails?hotel_id=${encodeURIComponent(hotel_id)}&arrival_date=${encodeURIComponent(arrival_date)}&departure_date=${encodeURIComponent(departure_date)}&adults=${encodeURIComponent(adults)}&currency_code=${encodeURIComponent(currency_code)}`;
     const response = await fetch(url, {
       headers: {
         "X-RapidAPI-Key": RAPID_API_KEY,

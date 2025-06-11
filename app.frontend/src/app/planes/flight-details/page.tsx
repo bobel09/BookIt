@@ -1,13 +1,22 @@
- "use client";
+"use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Typography, CircularProgress, Button } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { useFlightDetails } from "@/hooks/querys/useFlightDetails";
 import Navbar from "@/components/Navbar";
 import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
+import {
+  Segment,
+  Leg,
+  BaggagePolicy,
+  TravellerCabinLuggage,
+} from "@shared/types/flightDetails";
+import FullPageLoader from "@/components/FullPageLoader";
+import InPageLoader from "@/components/InPageLoader";
+import ErrorPage from "../../error";
 
 export default function FlightDetailsPage() {
-  const { data: user, isError } = useCurrentUser();
+  const { data: user, isLoading: userLoading, isError } = useCurrentUser();
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token") || "";
@@ -23,8 +32,11 @@ export default function FlightDetailsPage() {
 
   const { data, isLoading, error } = useFlightDetails({ token, currency });
 
+  if (userLoading) {
+    return <FullPageLoader text="Loading profile..." />;
+  }
   if (isError || !user) {
-    return <Typography>Error loading profile</Typography>;
+    return <ErrorPage />;
   }
 
   if (!token) {
@@ -41,12 +53,7 @@ export default function FlightDetailsPage() {
   }
 
   if (isLoading) {
-    return (
-      <Box sx={{ p: 4, textAlign: "center" }}>
-        <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Loading flight details...</Typography>
-      </Box>
-    );
+    return <FullPageLoader text="Loading flight details..." />;
   }
 
   if (error || !data) {
@@ -59,11 +66,9 @@ export default function FlightDetailsPage() {
       </Box>
     );
   }
-
-  // Extract details from API response
-  const offer = data.data?.flightOffer || {};
+  const segments: Segment[] = data.segments || [];
   const priceObj =
-    offer.priceBreakdown?.total || offer.unifiedPriceBreakdown?.price;
+    data.priceBreakdown?.total || data.unifiedPriceBreakdown?.price;
   const price = priceObj
     ? `${priceObj.units}${
         priceObj.nanos
@@ -72,12 +77,14 @@ export default function FlightDetailsPage() {
       }`
     : "-";
   const currencyCode = priceObj?.currencyCode || currency;
-  const validatingAirline = offer.validatingAirlineCodes?.[0] || "";
-  const segments = offer.segments || [];
+  const baggagePolicies: BaggagePolicy[] = data.baggagePolicies || [];
   const firstLeg = segments[0]?.legs?.[0];
   const logo = firstLeg?.carriersData?.[0]?.logo;
-  const airlineName = firstLeg?.carriersData?.[0]?.name || validatingAirline;
-  const bookingUrl = offer.bookingUrl || "";
+  const airlineName = firstLeg?.carriersData?.[0]?.name || "Unknown Airline";
+  const bookingUrl = `https://flights.booking.com/flights/${from}.AIRPORT-${to}.AIRPORT/${token}?type=ONEWAY&adults=1&depart=${departure_date}&cabinClass=${travel_class}`;
+
+  const travellerCabinLuggage: TravellerCabinLuggage[] =
+    data.travellerCabinLuggage || [];
 
   return (
     <>
@@ -131,11 +138,9 @@ export default function FlightDetailsPage() {
                 <img
                   src={logo}
                   alt={airlineName || "Airline"}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                  }}
+                  width={60}
+                  height={60}
+                  style={{ objectFit: "contain" }}
                 />
               </Box>
             )}
@@ -162,7 +167,7 @@ export default function FlightDetailsPage() {
           {/* Segments and Legs */}
           {segments.length > 0 && (
             <Box sx={{ mt: 2 }}>
-              {segments.map((seg: any, segIdx: number) => (
+              {segments.map((seg: Segment, segIdx: number) => (
                 <Box
                   key={segIdx}
                   sx={{
@@ -189,7 +194,7 @@ export default function FlightDetailsPage() {
                   </Typography>
                   {Array.isArray(seg.legs) && seg.legs.length > 0 && (
                     <Box>
-                      {seg.legs.map((leg: any, legIdx: number) => {
+                      {seg.legs.map((leg: Leg, legIdx: number) => {
                         // Layover calculation
                         let layover = null;
                         if (
@@ -249,9 +254,9 @@ export default function FlightDetailsPage() {
                                 <img
                                   src={leg.carriersData[0].logo}
                                   alt={leg.carriersData[0].name || "Airline"}
+                                  width={32}
+                                  height={32}
                                   style={{
-                                    width: 32,
-                                    height: 32,
                                     objectFit: "contain",
                                     borderRadius: 6,
                                     background: "#f5f5f5",
@@ -325,6 +330,69 @@ export default function FlightDetailsPage() {
             >
               Book this flight
             </Button>
+          )}
+          {/* Baggage Policies */}
+          {baggagePolicies.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Typography
+                variant="h6"
+                sx={{ color: "#FFD700", fontWeight: 700, mb: 2 }}
+              >
+                Baggage Policies
+              </Typography>
+              {baggagePolicies.map((policy, idx) => (
+                <Box key={idx} sx={{ mb: 1 }}>
+                  <Typography
+                    sx={{
+                      color: "#232526",
+                      fontWeight: 500,
+                      fontSize: "1.05rem",
+                    }}
+                  >
+                    {policy.name}:{" "}
+                    <a
+                      href={policy.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View Details
+                    </a>
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+          {/* Traveller Cabin Luggage */}
+          {travellerCabinLuggage.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Typography
+                variant="h6"
+                sx={{ color: "#FFD700", fontWeight: 700, mb: 2 }}
+              >
+                Cabin Luggage
+              </Typography>
+              {travellerCabinLuggage.map(
+                (luggage: TravellerCabinLuggage, idx: number) => (
+                  <Box key={idx} sx={{ mb: 1 }}>
+                    <Typography
+                      sx={{
+                        color: "#232526",
+                        fontWeight: 500,
+                        fontSize: "1.05rem",
+                      }}
+                    >
+                      Type: {luggage.luggageAllowance.luggageType}, Weight:{" "}
+                      {luggage.luggageAllowance.maxWeightPerPiece}{" "}
+                      {luggage.luggageAllowance.massUnit}, Size:{" "}
+                      {luggage.luggageAllowance.sizeRestrictions.maxLength}x
+                      {luggage.luggageAllowance.sizeRestrictions.maxWidth}x
+                      {luggage.luggageAllowance.sizeRestrictions.maxHeight}{" "}
+                      {luggage.luggageAllowance.sizeRestrictions.sizeUnit}
+                    </Typography>
+                  </Box>
+                )
+              )}
+            </Box>
           )}
         </Box>
       </Box>

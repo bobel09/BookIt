@@ -91,7 +91,7 @@ IMPORTANT: Nu returna alte câmpuri decât cele din structura de mai sus! Dacă 
         currency: preferences.currency || "USD",
       });
 
-      const flightsRes = await fetch(`http://localhost:3001/api/flights/offers?${queryParams}`, {
+      const flightsRes = await fetch(`https://bookit-x4d1.onrender.com/api/flights/offers?${queryParams}`, {
         method: "GET",
       });
       flights = await flightsRes.json();
@@ -169,7 +169,7 @@ IMPORTANT: Nu returna alte câmpuri decât cele din structura de mai sus! Dacă 
         room_qty: "1",
         currency: preferences.currency,
       });
-      const staysRes = await fetch(`http://localhost:3001/api/stays/hotels?${staysQueryParams}`, {
+      const staysRes = await fetch(`https://bookit-x4d1.onrender.com/api/stays/hotels?${staysQueryParams}`, {
         method: "GET",
       });
       const staysData = await staysRes.json();
@@ -214,7 +214,7 @@ IMPORTANT: Nu returna alte câmpuri decât cele din structura de mai sus! Dacă 
     let stayBookingUrl = null;
 if (selectedStay) {
   const detailsSelectedStay = await fetch(
-    `http://localhost:3001/api/stays/hotel-details?hotel_id=${selectedStay.hotel_id}&arrival_date=${dateFrom}&departure_date=${dateTo}&adults=${adults}&currency_code=${preferences.currency || "USD"}`,
+    `https://bookit-x4d1.onrender.com/api/stays/hotel-details?hotel_id=${selectedStay.hotel_id}&arrival_date=${dateFrom}&departure_date=${dateTo}&adults=${adults}&currency_code=${preferences.currency || "USD"}`,
     { method: "GET" }
   );
 const detailsSelectedStayData = await detailsSelectedStay.json();

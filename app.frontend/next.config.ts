@@ -1,19 +1,20 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+import type { Configuration } from "webpack";
+
+const nextConfig: NextConfig = {
   images: {
     domains: ["maps.googleapis.com"],
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-  webpack: (config) => {
-    // Add a loader for .geojson files
-    config.module.rules.push({
+  webpack: (config: Configuration) => {
+    config.module?.rules?.push({
       test: /\.geojson$/,
-      use: "json-loader", // Use JSON loader for GeoJSON
+      use: "json-loader",
     });
     return config;
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

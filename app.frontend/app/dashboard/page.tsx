@@ -15,11 +15,11 @@ import {
   ZoomableGroup,
 } from "react-simple-maps";
 import { useEffect, useState } from "react";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../src/components/Navbar";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
-import { ALL_COUNTRIES_NAMES } from "../../components/profilePage/EditVisitedCountries";
-import TravelStats from "../../components/TravelStats";
+import { ALL_COUNTRIES_NAMES } from "../../src/components/profilePage/EditVisitedCountries";
+import TravelStats from "../../src/components/TravelStats";
 import { useUpdateUserWishlist } from "@/hooks/mutations/updateUserWishlist";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";

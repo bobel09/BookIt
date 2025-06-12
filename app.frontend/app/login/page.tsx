@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import api from "../../lib/axios";
+import api from "../../src/lib/axios";
 import { AxiosError } from "axios";
 import Notification from "@/components/Notification";
 

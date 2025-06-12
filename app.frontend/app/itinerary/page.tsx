@@ -27,7 +27,7 @@ import MuiAlert, { AlertColor } from "@mui/material/Alert";
 import Navbar from "@/components/Navbar";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import type { Airport } from "../../../../shared/types/flightDetails";
+import type { Airport } from "../../../shared/types/flightDetails";
 import FlightResultCard from "./components/FlightResultCard";
 import ItineraryResultCard from "./components/ItineraryResultCard";
 import StayResultCard from "./components/StayResultCard";

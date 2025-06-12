@@ -6,7 +6,7 @@ import {
   Button,
   Autocomplete,
 } from "@mui/material";
-import type { Airport } from "../../../../shared/types/flightDetails";
+import type { Airport } from "@shared/types/flightDetails";
 
 interface DestinationOption {
   dest_id?: string;

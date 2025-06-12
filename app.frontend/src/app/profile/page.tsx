@@ -269,7 +269,16 @@ export default function ProfilePage() {
                 const tripKey = trip.id;
                 const isExpanded = expandedTrip === tripKey;
                 return (
-                  <Grid item xs={12} key={tripKey}>
+                  <Box
+                    key={tripKey}
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      background: "#f9f9f9",
+                      mb: 2,
+                      boxShadow: "0 2px 8px #FFD70033",
+                    }}
+                  >
                     <Card
                       sx={{
                         width: { xs: "100%", sm: "100%", md: "1140px" },
@@ -442,7 +451,7 @@ export default function ProfilePage() {
                         )}
                       </CardContent>
                     </Card>
-                  </Grid>
+                  </Box>
                 );
               })}
             </Grid>

@@ -555,7 +555,7 @@ export default function PlanesSearchPage() {
                         ? priceA - priceB
                         : priceB - priceA;
                     })
-                    .map((offer: FlightOffer) => {
+                    .map((offer: any) => {
                       const priceObj =
                         offer.priceBreakdown?.total ||
                         offer.unifiedPriceBreakdown?.price;
@@ -597,8 +597,8 @@ export default function PlanesSearchPage() {
                             const params = new URLSearchParams({
                               token: offer.token,
                               currency: userCurrency,
-                              from: fromAirport.id || "",
-                              to: toAirport.id || "",
+                              from: fromAirport?.id || "",
+                              to: toAirport?.id || "",
                               departure_date: departureDate,
                               return_date: enableReturn ? returnDate : "",
                               adults: adults.toString(),

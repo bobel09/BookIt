@@ -109,22 +109,22 @@ export default function ProfilePage() {
             </Typography>
 
             {Object.keys(user.preferences || {}).length > 0 ? (
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                <Box sx={{ flex: "1 1 200px", mb: 2 }}>
                   <Typography variant="subtitle1">💱 Currency</Typography>
                   <Chip
                     label={user.preferences.currency}
                     sx={{ backgroundColor: "#4caf50", color: "#fff" }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box sx={{ flex: "1 1 200px", mb: 2 }}>
                   <Typography variant="subtitle1">💰 Budget</Typography>
                   <Chip
                     label={user.preferences.budget}
                     sx={{ backgroundColor: "#4caf50", color: "#fff" }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box sx={{ flex: "1 1 200px", mb: 2 }}>
                   <Typography variant="subtitle1">
                     🏨 Hotel Preference
                   </Typography>
@@ -132,22 +132,22 @@ export default function ProfilePage() {
                     label={user.preferences.hotel}
                     sx={{ backgroundColor: "#4caf50", color: "#fff" }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box sx={{ flex: "1 1 200px", mb: 2 }}>
                   <Typography variant="subtitle1">🌤️ Climate</Typography>
                   <Chip
                     label={user.preferences.climate}
                     sx={{ backgroundColor: "#4caf50", color: "#fff" }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box sx={{ flex: "1 1 200px", mb: 2 }}>
                   <Typography variant="subtitle1">🕐 Trip Style</Typography>
                   <Chip
                     label={user.preferences.tripStyle}
                     sx={{ backgroundColor: "#4caf50", color: "#fff" }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box sx={{ flex: "1 1 200px", mb: 2 }}>
                   <Typography variant="subtitle1">🏛️ Interests</Typography>
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                     {user.preferences.interests?.map((i, idx) => (
@@ -158,8 +158,8 @@ export default function ProfilePage() {
                       />
                     ))}
                   </Box>
-                </Grid>
-                <Grid item xs={12}>
+                </Box>
+                <Box sx={{ flex: "1 1 200px", mb: 2 }}>
                   <Typography variant="subtitle1">
                     🍽️ Food Preference
                   </Typography>
@@ -172,8 +172,8 @@ export default function ProfilePage() {
                       />
                     ))}
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             ) : (
               <Typography color="gray">No preferences set.</Typography>
             )}

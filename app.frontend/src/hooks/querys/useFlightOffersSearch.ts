@@ -45,7 +45,7 @@ export const useFlightOffersSearch = ({
       const res = await fetchWithAuth(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL
-        }/flights/flight-offers-search?${params.toString()}`,
+        }/flights/offers?${params.toString()}`,
         token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
       );
       console.log(res);

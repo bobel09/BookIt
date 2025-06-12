@@ -1,8 +1,8 @@
 // app/(routes)/itinerary/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import React, { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { useGenerateItinerary } from "@/hooks/mutations/useGenerateItineraryQuery";
 import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
 import { useAirportSearch } from "@/hooks/querys/useAirportSearch";
@@ -16,7 +16,6 @@ import {
   CircularProgress,
   Checkbox,
   FormControlLabel,
-  Autocomplete,
   Collapse,
   Snackbar,
   Dialog,
@@ -38,6 +37,7 @@ import TripDetailsForm from "./components/TripDetailsForm";
 import Footer from "@/components/Footer";
 import FullPageLoader from "@/components/FullPageLoader";
 import InPageLoader from "@/components/InPageLoader";
+import ItinerarySearchParamsHandler from "./ItinerarySearchParamsHandler";
 
 const Alert = React.forwardRef(function Alert(
   props: React.ComponentProps<typeof MuiAlert>,
@@ -72,7 +72,6 @@ interface DestinationOption {
 
 export default function ItineraryPage() {
   const { data: user } = useCurrentUser();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [destinationInput, setDestinationInput] = useState("");
   const [destinationOption, setDestinationOption] =
@@ -149,24 +148,6 @@ export default function ItineraryPage() {
       setTripTitle("");
     }
   }, [isSaveSuccess, saveTriggered]);
-
-  useEffect(() => {
-    const destinationFromSearch = searchParams.get("destination");
-    // Only set state if the URL param is non-empty and different from the current state
-    if (destinationFromSearch && destinationInput !== destinationFromSearch) {
-      setDestinationInput(destinationFromSearch);
-      setDestinationSearch(destinationFromSearch);
-      setDestinationOption(null);
-      setToAirport(null);
-    }
-    // If the URL param is empty and the state is not, clear the state
-    if (!destinationFromSearch && destinationInput) {
-      setDestinationInput("");
-      setDestinationSearch("");
-      setDestinationOption(null);
-      setToAirport(null);
-    }
-  }, [searchParams, destinationInput]);
 
   useEffect(() => {
     // Only set toAirport if not already set and there are results
@@ -253,9 +234,7 @@ export default function ItineraryPage() {
       setIncludeFlights(true);
       setIncludeStays(true);
     }
-  }, [data]);
-
-  const countryParam = searchParams.get("country") || "";
+  }, [data, destinationInput]);
 
   // Improved: Only update URL if params actually changed to avoid infinite loop and flicker
   useEffect(() => {
@@ -292,7 +271,6 @@ export default function ItineraryPage() {
     if (!data) return;
     const params = new URLSearchParams(window.location.search);
     const urlDestination = params.get("destination") || "";
-    const urlCountry = params.get("country") || "";
 
     // Only update if different from current state
     if (destinationInput !== urlDestination) {
@@ -302,16 +280,6 @@ export default function ItineraryPage() {
     }
     // No need to sync other fields
   }, [data]);
-
-  // Utility to clear all itinerary-related URL params
-  function clearItineraryUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    ["destination", "country"].forEach((key) => params.delete(key));
-    router.replace(
-      window.location.pathname + (params.toString() ? `?${params}` : ""),
-      { scroll: false }
-    );
-  }
 
   // Utility to clear just the destination-related params
   function clearDestinationUrlParams() {
@@ -332,6 +300,16 @@ export default function ItineraryPage() {
 
   return (
     <>
+      {/* Suspense boundary for search param handler */}
+      <Suspense fallback={null}>
+        <ItinerarySearchParamsHandler
+          destinationInput={destinationInput}
+          setDestinationInput={setDestinationInput}
+          setDestinationSearch={setDestinationSearch}
+          setDestinationOption={setDestinationOption}
+          setToAirport={setToAirport}
+        />
+      </Suspense>
       <Navbar username={user.username} />
       <Box
         sx={{
@@ -614,9 +592,7 @@ export default function ItineraryPage() {
                 Error: {(error as Error)?.message}
               </Typography>
             )}
-            {isPending && (
-              <InPageLoader text="Generating your itinerary..." />
-            )}
+            {isPending && <InPageLoader text="Generating your itinerary..." />}
             {data && (
               <Box mt={4}>
                 {/* Itinerary Section - visually enhanced by days */}

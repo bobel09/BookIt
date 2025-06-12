@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import React, { useState, Suspense } from "react";
 import {
   Box,
   Typography,
@@ -10,10 +10,6 @@ import {
   Autocomplete,
   Button,
 } from "@mui/material";
-import { useState } from "react";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import Navbar from "@/components/Navbar";
 import { usePopularCities } from "@/hooks/querys/usePopularCities";
 import { usePopularPlaces } from "@/hooks/querys/usePopularPlaces";
 import Image from "next/image";
@@ -23,6 +19,10 @@ import { useRouter } from "next/navigation";
 import FullPageLoader from "@/components/FullPageLoader";
 import InPageLoader from "@/components/InPageLoader";
 import ErrorPage from "../error";
+import SearchCountryParamHandler from "./SearchCountryParamHandler";
+import Navbar from "@/components/Navbar";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 interface City {
   name: string;
@@ -35,9 +35,7 @@ interface Place {
 }
 
 const PopularPlacesPage = () => {
-  const searchParams = useSearchParams();
-  const country = searchParams.get("country") || "France";
-
+  const [country, setCountry] = useState("France");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [searchCity, setSearchCity] = useState("");
@@ -104,6 +102,12 @@ const PopularPlacesPage = () => {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <SearchCountryParamHandler
+          setCountry={setCountry}
+          defaultCountry="France"
+        />
+      </Suspense>
       <Navbar username={user.username} />
       <Box
         sx={{

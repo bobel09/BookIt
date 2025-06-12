@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, Suspense } from "react";
 import {
   Box,
   Typography,
@@ -13,10 +13,10 @@ import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
 import { useSearchDestination } from "@/hooks/querys/useSearchDestination";
 import { useSearchHotels } from "@/hooks/querys/useSearchHotels";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 import FullPageLoader from "@/components/FullPageLoader";
 import InPageLoader from "@/components/InPageLoader";
+import SearchStaysParamsHandler from "./SearchStaysParamsHandler";
 
 export default function StaysPage() {
   const { data: user, isLoading: userLoading, isError } = useCurrentUser();
@@ -48,24 +48,6 @@ export default function StaysPage() {
     searchTriggered
   );
 
-  const params = useSearchParams();
-
-  useEffect(() => {
-    const dest_id = params.get("dest_id");
-    const checkin_date = params.get("checkin_date");
-    const checkout_date = params.get("checkout_date");
-    const adultsParam = params.get("adults");
-    const room_qty = params.get("room_qty");
-    if (dest_id) setSelectedDestination({ dest_id });
-    if (checkin_date) setCheckinDate(checkin_date);
-    if (checkout_date) setCheckoutDate(checkout_date);
-    if (adultsParam) setAdults(Number(adultsParam));
-    if (room_qty) setRoomQty(Number(room_qty));
-    if (dest_id && checkin_date && checkout_date && adultsParam && room_qty) {
-      setSearchTriggered(true);
-    }
-  }, [params]);
-
   const handleSearchHotels = () => {
     setSearchTriggered(true);
   };
@@ -96,6 +78,16 @@ export default function StaysPage() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <SearchStaysParamsHandler
+          setSelectedDestination={setSelectedDestination}
+          setCheckinDate={setCheckinDate}
+          setCheckoutDate={setCheckoutDate}
+          setAdults={setAdults}
+          setRoomQty={setRoomQty}
+          setSearchTriggered={setSearchTriggered}
+        />
+      </Suspense>
       <Navbar username={user.username} />
       <Box
         sx={{

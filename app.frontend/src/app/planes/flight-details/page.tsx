@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { Box, Typography, Button } from "@mui/material";
 import { useFlightDetails } from "@/hooks/querys/useFlightDetails";
 import Navbar from "@/components/Navbar";
@@ -12,63 +13,28 @@ import {
   TravellerCabinLuggage,
 } from "@shared/types/flightDetails";
 import FullPageLoader from "@/components/FullPageLoader";
-import InPageLoader from "@/components/InPageLoader";
 import ErrorPage from "../../error";
+import SearchFlightDetailsParamsHandler from "./SearchFlightDetailsParamsHandler";
 
 export default function FlightDetailsPage() {
   const { data: user, isLoading: userLoading, isError } = useCurrentUser();
   const router = useRouter();
-  const params = useSearchParams();
-  const token = params.get("token") || "";
-  const currency = params.get("currency") || "";
-  // Restore search context for back navigation
-  const from = params.get("from") || "";
-  const to = params.get("to") || "";
-  const departure_date = params.get("departure_date") || "";
-  const return_date = params.get("return_date") || "";
-  const adults = params.get("adults") || "";
-  const travel_class = params.get("travel_class") || "";
-  const non_stop = params.get("non_stop") || "";
+  const [token, setToken] = useState("");
+  const [currency, setCurrency] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [departure_date, setDepartureDate] = useState("");
+  const [return_date, setReturnDate] = useState("");
+  const [adults, setAdults] = useState("");
+  const [travel_class, setTravelClass] = useState("");
+  const [non_stop, setNonStop] = useState("");
 
   const { data, isLoading, error } = useFlightDetails({ token, currency });
 
-  if (userLoading) {
-    return <FullPageLoader text="Loading profile..." />;
-  }
-  if (isError || !user) {
-    return <ErrorPage />;
-  }
-
-  if (!token) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Typography color="error">
-          Missing flight or search parameters.
-        </Typography>
-        <Button onClick={() => router.back()} sx={{ mt: 2 }}>
-          Back
-        </Button>
-      </Box>
-    );
-  }
-
-  if (isLoading) {
-    return <FullPageLoader text="Loading flight details..." />;
-  }
-
-  if (error || !data) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Typography color="error">Failed to load flight details.</Typography>
-        <Button onClick={() => router.back()} sx={{ mt: 2 }}>
-          Back
-        </Button>
-      </Box>
-    );
-  }
-  const segments: Segment[] = data.segments || [];
+  // Restore variable assignments using state variables
+  const segments: Segment[] = data?.segments || [];
   const priceObj =
-    data.priceBreakdown?.total || data.unifiedPriceBreakdown?.price;
+    data?.priceBreakdown?.total || data?.unifiedPriceBreakdown?.price;
   const price = priceObj
     ? `${priceObj.units}${
         priceObj.nanos
@@ -77,17 +43,35 @@ export default function FlightDetailsPage() {
       }`
     : "-";
   const currencyCode = priceObj?.currencyCode || currency;
-  const baggagePolicies: BaggagePolicy[] = data.baggagePolicies || [];
+  const baggagePolicies = data?.baggagePolicies || [];
   const firstLeg = segments[0]?.legs?.[0];
   const logo = firstLeg?.carriersData?.[0]?.logo;
   const airlineName = firstLeg?.carriersData?.[0]?.name || "Unknown Airline";
   const bookingUrl = `https://flights.booking.com/flights/${from}.AIRPORT-${to}.AIRPORT/${token}?type=ONEWAY&adults=1&depart=${departure_date}&cabinClass=${travel_class}`;
+  const travellerCabinLuggage = data?.travellerCabinLuggage || [];
 
-  const travellerCabinLuggage: TravellerCabinLuggage[] =
-    data.travellerCabinLuggage || [];
+  if (userLoading || isLoading) {
+    return <FullPageLoader text="Loading flight details..." />;
+  }
+  if (isError || !user) {
+    return <ErrorPage />;
+  }
 
   return (
     <>
+      <Suspense fallback={null}>
+        <SearchFlightDetailsParamsHandler
+          setToken={setToken}
+          setCurrency={setCurrency}
+          setFrom={setFrom}
+          setTo={setTo}
+          setDepartureDate={setDepartureDate}
+          setReturnDate={setReturnDate}
+          setAdults={setAdults}
+          setTravelClass={setTravelClass}
+          setNonStop={setNonStop}
+        />
+      </Suspense>
       <Navbar username={user.username} />
       <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
         <Button
@@ -340,7 +324,7 @@ export default function FlightDetailsPage() {
               >
                 Baggage Policies
               </Typography>
-              {baggagePolicies.map((policy, idx) => (
+              {baggagePolicies.map((policy: BaggagePolicy, idx: number) => (
                 <Box key={idx} sx={{ mb: 1 }}>
                   <Typography
                     sx={{

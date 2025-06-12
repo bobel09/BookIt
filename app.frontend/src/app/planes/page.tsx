@@ -7,8 +7,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+
+import React, { useEffect, useMemo, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
 import { useAirportSearch } from "@/hooks/querys/useAirportSearch";
 import { useFlightOffersSearch } from "@/hooks/querys/useFlightOffersSearch";
@@ -20,11 +21,11 @@ import FlightLandIcon from "@mui/icons-material/FlightLand";
 import InPageLoader from "@/components/InPageLoader";
 import FullPageLoader from "@/components/FullPageLoader";
 import SortIcon from "@mui/icons-material/Sort";
+import SearchFlightParamsHandler from "./SearchFlightParamsHandler";
 
 export default function PlanesSearchPage() {
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
@@ -108,39 +109,6 @@ export default function PlanesSearchPage() {
   };
 
   useEffect(() => {
-    const from = searchParams.get("from") || "";
-    const to = searchParams.get("to") || "";
-    const depart = searchParams.get("departure_date") || "";
-    const ret = searchParams.get("return_date") || "";
-    const adultsParam = Number(searchParams.get("adults") || 1);
-    const cls = searchParams.get("travel_class") || "ECONOMY";
-
-    if (from) setFromAirport({ id: from, code: from } as Airport);
-    if (to) setToAirport({ id: to, code: to } as Airport);
-    if (depart) setDepartureDate(depart);
-    if (ret) {
-      setReturnDate(ret);
-      setEnableReturn(true);
-    }
-    if (adultsParam) setAdults(adultsParam);
-    setTravelClass(cls);
-
-    if (from && to && depart && adultsParam && cls) {
-      setFlightSearchParams({
-        from,
-        to,
-        depart,
-        returnDate: ret || undefined,
-        adults: adultsParam,
-        cabinClass: cls,
-        currency: userCurrency,
-        nonStop,
-      });
-      setSearchTriggered(true);
-    }
-  }, [searchParams, userCurrency]);
-
-  useEffect(() => {
     if (!localStorage.getItem("token")) {
       router.push("/login");
     }
@@ -180,6 +148,21 @@ export default function PlanesSearchPage() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <SearchFlightParamsHandler
+          setFromAirport={setFromAirport}
+          setToAirport={setToAirport}
+          setDepartureDate={setDepartureDate}
+          setReturnDate={setReturnDate}
+          setEnableReturn={setEnableReturn}
+          setAdults={setAdults}
+          setTravelClass={setTravelClass}
+          setFlightSearchParams={setFlightSearchParams}
+          setSearchTriggered={setSearchTriggered}
+          userCurrency={userCurrency}
+          nonStop={nonStop}
+        />
+      </Suspense>
       <Navbar username={user?.username || "Guest"} />
       <Box
         sx={{

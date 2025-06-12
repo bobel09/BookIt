@@ -31,6 +31,7 @@ export const useHotelDetails = ({
         arrival_date,
         departure_date,
         adults,
+        currency_code: currency || "USD", // Default to "USD" if currency is not provided
       });
       if (currency) params.append("currency", currency);
       const token = localStorage.getItem("token");

@@ -15,11 +15,11 @@ import {
   ZoomableGroup,
 } from "react-simple-maps";
 import { useEffect, useState } from "react";
-import Navbar from "../../src/components/Navbar";
+import Navbar from "../../components/Navbar";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/querys/useCurrentUserQuery";
-import { ALL_COUNTRIES_NAMES } from "../../src/components/profilePage/EditVisitedCountries";
-import TravelStats from "../../src/components/TravelStats";
+import { ALL_COUNTRIES_NAMES } from "../../components/profilePage/EditVisitedCountries";
+import TravelStats from "@/components/TravelStats";
 import { useUpdateUserWishlist } from "@/hooks/mutations/updateUserWishlist";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
@@ -28,7 +28,6 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useUpdateVisitedCountries } from "@/hooks/mutations/updateUserVisitedCountriesMutation";
 import Notification from "@/components/Notification";
 import Footer from "@/components/Footer";
-import InPageLoader from "@/components/InPageLoader";
 import FullPageLoader from "@/components/FullPageLoader";
 import AiDestinationSuggestions from "@/components/AiDestinationSuggestions";
 import { useTheme, useMediaQuery } from "@mui/material";

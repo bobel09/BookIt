@@ -73,9 +73,11 @@ export default function StaysPage() {
   // Sorting logic for hotels
   const sortedHotels = hotelsSearch.data?.data?.hotels
     ? [...hotelsSearch.data.data.hotels].sort((a, b) => {
-        const getPrice = (hotel) =>
-          hotel.property.priceBreakdown?.grossPrice?.value || 0;
-        const getReview = (hotel) => hotel.property.reviewScore || 0;
+        const getPrice = (hotel: {
+          property: { priceBreakdown: { grossPrice: { value: any } } };
+        }) => hotel.property.priceBreakdown?.grossPrice?.value || 0;
+        const getReview = (hotel: { property: { reviewScore: any } }) =>
+          hotel.property.reviewScore || 0;
         if (sortOption === "price_low_high") {
           return getPrice(a) - getPrice(b);
         } else if (sortOption === "price_high_low") {

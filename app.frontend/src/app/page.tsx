@@ -490,7 +490,6 @@ export default function LandingPage() {
               fontSize: { xs: "1rem", md: "1.15rem" },
               letterSpacing: 1.5,
               mb: 1.5,
-              letterSpacing: 2,
             }}
           >
             how to use
